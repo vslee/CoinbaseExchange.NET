@@ -12,7 +12,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 {
     public class RealtimeOrderBookClient : ExchangeClientBase
     {
-        private const string Product = "BTC-USD";
+		private readonly string ProductString;
 
         private object _spreadLock = new object();
         private object _askLock = new object();
@@ -43,8 +43,9 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             }
         }
 
-        public RealtimeOrderBookClient(CBAuthenticationContainer auth) : base(auth)
+        public RealtimeOrderBookClient(CBAuthenticationContainer auth, string ProductString) : base(auth)
         {
+			this.ProductString = ProductString;
             _sells = new List<BidAskOrder>();
             _buys = new List<BidAskOrder>();
 
@@ -56,7 +57,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
         private async void ResetStateWithFullOrderBook()
         {
-            var response = await GetProductOrderBook(Product, 3);
+            var response = await GetProductOrderBook(ProductString, 3);
 
             lock (_spreadLock)
             {
@@ -75,7 +76,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
             OnUpdated();
 
-            Subscribe(Product, OnOrderBookEventReceived);
+            Subscribe(ProductString, OnOrderBookEventReceived);
         }
 
         private void OnUpdated()
@@ -133,49 +134,56 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         {
             var order = new BidAskOrder();
 
-            order.Id = receivedMessage.OrderId;
-            order.Price = receivedMessage.Price;
-            order.Size = receivedMessage.Size;
+			if (receivedMessage.Price != null) // no "price" token in market orders
+			{
+				order.Id = receivedMessage.OrderId;
+				order.Price = receivedMessage.Price.Value;
+				order.Size = receivedMessage.Size;
 
-            lock (_spreadLock)
-            {
-                if (receivedMessage.Side == "buy")
-                {
-                    lock (_bidLock)
-                    {
-                        _buys.Add(order);
-                        Buys = _buys.ToList();
-                    }
-                }
-
-                else if (receivedMessage.Side == "sell")
-                {
-                    lock (_askLock)
-                    {
-                        _sells.Add(order);
-                        Sells = _sells.ToList();
-                    }
-                }
-            }
+				lock (_spreadLock)
+				{
+					if (receivedMessage.Side == "buy")
+					{
+						lock (_bidLock)
+						{
+							_buys.Add(order);
+							Buys = _buys.ToList();
+						}
+					}
+					else if (receivedMessage.Side == "sell")
+					{
+						lock (_askLock)
+						{
+							_sells.Add(order);
+							Sells = _sells.ToList();
+						}
+					}
+				}
+			}
         }
 
         private void OnDone(RealtimeDone message)
         {
             lock (_spreadLock)
             {
-                lock (_askLock)
-                {
-                    lock (_bidLock)
-                    {
-                        _buys.RemoveAll(b => b.Id == message.OrderId);
-                        _sells.RemoveAll(a => a.Id == message.OrderId);
-
-                        Buys = _buys.ToList();
-                        Sells = _sells.ToList();
-                    }
-                }
-            }
-        }
+				if (message.Side == "buy")
+				{
+					lock (_bidLock)
+					{
+						_buys.RemoveAll(b => b.Id == message.OrderId);
+						Buys = _buys.ToList();
+					}
+				}
+				else if (message.Side == "sell")
+				{
+					lock (_askLock)
+					{
+						_sells.RemoveAll(a => a.Id == message.OrderId);
+						Sells = _sells.ToList();
+					}
+				}
+			}
+		}
 
         private static async void Subscribe(string product, Action<RealtimeMessage> onMessageReceived)
         {
@@ -185,12 +193,13 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             if (onMessageReceived == null)
                 throw new ArgumentNullException("onMessageReceived", "Message received callback must not be null.");
 
-            var uri = new Uri("wss://ws-feed.exchange.coinbase.com");
+			var sandbox_uri = new Uri("wss://ws-feed-public.sandbox.gdax.com");
+			var uri = new Uri("wss://ws-feed.gdax.com");
             var webSocketClient = new ClientWebSocket();
             var cancellationToken = new CancellationToken();
             var requestString = String.Format(@"{{""type"": ""subscribe"",""product_id"": ""{0}""}}", product);
             var requestBytes = UTF8Encoding.UTF8.GetBytes(requestString);
-            await webSocketClient.ConnectAsync(uri, cancellationToken);
+            await webSocketClient.ConnectAsync(ExchangeClientBase.IsSandbox ? sandbox_uri : uri, cancellationToken);
 
             if (webSocketClient.State == WebSocketState.Open)
             {
@@ -231,7 +240,13 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
                         case "change":
                             realtimeMessage = new RealtimeChange(jToken);
                             break;
-                        default:
+						case "heartbeat":
+							// + should implement this
+							break;
+						case "error":
+							new RealtimeError(jToken); // + do something with this
+							break;
+						default:
                             break;
                     }
 

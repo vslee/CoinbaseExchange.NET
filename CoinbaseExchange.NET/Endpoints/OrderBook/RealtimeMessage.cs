@@ -11,13 +11,15 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
     {
         public string Type { get; set; }
         public long Sequence { get; set; }
-        public decimal Price { get; set; }
+        public decimal? Price { get; set; }
 
         protected RealtimeMessage(JToken jToken)
         {
             this.Type = jToken["type"].Value<string>();
             this.Sequence = jToken["sequence"].Value<long>();
-            this.Price = jToken["price"].Value<decimal>();
+			var priceToken = jToken["price"];
+			if (priceToken != null) // no "price" token in market orders
+				this.Price = priceToken.Value<decimal>();
         }
     }
 
@@ -109,6 +111,12 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeError
     {
-
-    }
+		public string Type { get; set; }
+		public string Message { get; set; }
+		public RealtimeError(JToken jToken)
+        {
+			this.Type = jToken["type"].Value<string>();
+			this.Message = jToken["message"].Value<string>();
+		}
+	}
 }

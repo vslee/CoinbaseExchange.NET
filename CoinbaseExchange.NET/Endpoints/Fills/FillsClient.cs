@@ -9,7 +9,8 @@ namespace CoinbaseExchange.NET.Endpoints.Fills
 {
     public class FillsClient : ExchangeClientBase
     {
-        public FillsClient(CBAuthenticationContainer authenticationContainer) : base(authenticationContainer)
+        public FillsClient(CBAuthenticationContainer authenticationContainer) 
+			: base(authenticationContainer)
         {
 
         }

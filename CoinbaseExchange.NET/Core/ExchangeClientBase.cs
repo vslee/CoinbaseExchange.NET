@@ -14,10 +14,12 @@ namespace CoinbaseExchange.NET.Core
 {
     public abstract class ExchangeClientBase
     {
-        public const string API_ENDPOINT_URL = "https://api.exchange.coinbase.com/";
+		public readonly Uri API_SANDBOX_ENDPOINT_URL = new Uri("https://api-public.sandbox.gdax.com");
+		public readonly Uri API_ENDPOINT_URL = new Uri("https://api.gdax.com");
         private const string ContentType = "application/json";
+		public static bool IsSandbox { get; set; }
 
-        private readonly CBAuthenticationContainer _authContainer;
+		private readonly CBAuthenticationContainer _authContainer;
 
         public ExchangeClientBase(CBAuthenticationContainer authContainer)
         {
@@ -27,7 +29,7 @@ namespace CoinbaseExchange.NET.Core
         protected async Task<ExchangeResponse> GetResponse(ExchangeRequestBase request)
         {
             var relativeUrl = request.RequestUrl;
-            var absoluteUri = new Uri(new Uri(API_ENDPOINT_URL), relativeUrl);
+            var absoluteUri = new Uri(IsSandbox ? API_SANDBOX_ENDPOINT_URL : API_ENDPOINT_URL, relativeUrl);
 
             var timestamp = (request.TimeStamp).ToString(System.Globalization.CultureInfo.InvariantCulture);
             var body = request.RequestBody;
@@ -49,7 +51,8 @@ namespace CoinbaseExchange.NET.Core
                 httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", timestamp);
                 httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", passphrase);
 
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "sefbkn.github.io");
+				httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
+				httpClient.DefaultRequestHeaders.Add("User-Agent", "sefbkn.github.io");
 
                 switch(method)
                 {

@@ -11,8 +11,8 @@ namespace CoinbaseExchange.NET.Endpoints.Fills
     {
         public string TradeId { get; set; }
         public string ProductId { get; set; }
-        public string Price { get; set; }
-        public string Size { get; set; }
+        public decimal Price { get; set; }
+        public decimal Size { get; set; }
         public string OrderId { get; set; }
         public DateTime Time { get; set; }
         public string Fee { get; set; }
@@ -23,8 +23,8 @@ namespace CoinbaseExchange.NET.Endpoints.Fills
         {
             this.TradeId = jToken["trade_id"].Value<string>();
             this.ProductId = jToken["product_id"].Value<string>();
-            this.Price = jToken["price"].Value<string>();
-            this.Size = jToken["size"].Value<string>();
+            this.Price = jToken["price"].Value<Decimal>();
+            this.Size = jToken["size"].Value<Decimal>();
             this.OrderId = jToken["order_id"].Value<string>();
             this.Time = jToken["created_at"].Value<DateTime>();
             this.Fee = jToken["fee"].Value<string>();

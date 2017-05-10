@@ -11,6 +11,9 @@ namespace CoinbaseExchange.NET.Core
     {
         public string Method { get; private set; }
         public double TimeStamp { get; private set; }
+		/// <summary>
+		/// relative URL
+		/// </summary>
         public string RequestUrl { get; protected set; }
         public string RequestBody { get; protected set; }
 

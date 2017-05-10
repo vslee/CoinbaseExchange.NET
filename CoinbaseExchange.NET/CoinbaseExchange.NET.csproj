@@ -67,6 +67,10 @@
     <Compile Include="Endpoints\OrderBook\GetProductOrderBookResponse.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeMessage.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookClient.cs" />
+    <Compile Include="Endpoints\Products\GetProductsRequest.cs" />
+    <Compile Include="Endpoints\Products\GetProductsResponse.cs" />
+    <Compile Include="Endpoints\Products\Products.cs" />
+    <Compile Include="Endpoints\Products\ProductsClient.cs" />
     <Compile Include="Errors\ExchangeClientError.cs" />
     <Compile Include="Core\ExchangePageableRequestBase.cs" />
     <Compile Include="Core\ExchangeRequestBase.cs" />
@@ -79,6 +83,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

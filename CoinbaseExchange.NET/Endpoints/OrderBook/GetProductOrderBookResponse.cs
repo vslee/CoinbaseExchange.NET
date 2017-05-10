@@ -10,7 +10,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 {
     public class GetProductOrderBookResponse : ExchangeResponseBase
     {
-        public int Sequence {get; private set;}
+        public Int64 Sequence {get; private set;}
         public IReadOnlyList<BidAskOrder> Sells { get; private set; }
         public IReadOnlyList<BidAskOrder> Buys { get; private set; }
 
@@ -22,7 +22,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             var bids = jObject["bids"].Select(x => (JArray) x).ToArray();
             var asks = jObject["asks"].Select(x => (JArray) x).ToArray();
 
-            Sequence = jObject["sequence"].Value<int>();
+            Sequence = jObject["sequence"].Value<Int64>();
 
             Sells = asks.Select(a => GetBidAskOrderFromJToken(a)).ToList();
             Buys = bids.Select(b => GetBidAskOrderFromJToken(b)).ToList();
