@@ -38,6 +38,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -67,6 +68,12 @@
     <Compile Include="Endpoints\OrderBook\GetProductOrderBookResponse.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeMessage.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookClient.cs" />
+    <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersRequest.cs" />
+    <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersResponse.cs" />
+    <Compile Include="Endpoints\PersonalOrders\PersonalOrder.cs" />
+    <Compile Include="Endpoints\PersonalOrders\PersonalOrdersClient.cs" />
+    <Compile Include="Endpoints\PersonalOrders\SubmitPersonalOrderRequest.cs" />
+    <Compile Include="Endpoints\PersonalOrders\SubmitPersonalOrderResponse.cs" />
     <Compile Include="Endpoints\Products\GetProductsRequest.cs" />
     <Compile Include="Endpoints\Products\GetProductsResponse.cs" />
     <Compile Include="Endpoints\Products\Products.cs" />

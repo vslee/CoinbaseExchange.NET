@@ -76,7 +76,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public string MakerOrderId { get; set; }
         public string TakerOrderId { get; set; }
         public DateTime Time { get; set; }
-        public decimal Price { get; set; }
         public string Side { get; set; }
 
         public RealtimeMatch(JToken jToken) : base(jToken)
@@ -85,7 +84,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             this.MakerOrderId = jToken["maker_order_id"].Value<string>();
             this.TakerOrderId = jToken["taker_order_id"].Value<string>();
             this.Time = jToken["time"].Value<DateTime>();
-            this.Price = jToken["price"].Value<decimal>();
             this.Side = jToken["side"].Value<string>();
         }
     }
