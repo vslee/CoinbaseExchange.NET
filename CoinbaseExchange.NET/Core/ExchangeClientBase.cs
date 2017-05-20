@@ -21,7 +21,7 @@ namespace CoinbaseExchange.NET.Core
         private const string ContentType = "application/json";
 		public static bool IsSandbox { get; set; }
 
-		private readonly CBAuthenticationContainer _authContainer;
+		protected readonly CBAuthenticationContainer _authContainer;
 
         public ExchangeClientBase(CBAuthenticationContainer authContainer)
         {
@@ -66,27 +66,22 @@ namespace CoinbaseExchange.NET.Core
 					uriBuilder.Query = nvc.ToString();
 			}
 
-            var timestamp = (request.TimeStamp).ToString(System.Globalization.CultureInfo.InvariantCulture);
             var body = request.RequestBody;
             var method = request.Method;
             var url = uriBuilder.ToString();
 			var relativeUrlForSignature = baseURI.MakeRelativeUri(uriBuilder.Uri).ToString();
 
-
-			var passphrase = _authContainer.Passphrase;
-            var apiKey = _authContainer.ApiKey;
-
             // Caution: Use the relative URL, *NOT* the absolute one.
-            var signature = _authContainer.ComputeSignature(timestamp, "/" + relativeUrlForSignature, method, body);
+            var signature = _authContainer.ComputeSignature("/" + relativeUrlForSignature, method, body);
 
             using(var httpClient = new HttpClient())
             {
                 HttpResponseMessage response;
 
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-KEY", apiKey);
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-SIGN", signature);
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", timestamp);
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", passphrase);
+                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-KEY", signature.ApiKey);
+                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-SIGN", signature.Signature);
+                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", signature.TimeStamp);
+                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", signature.Passphrase);
 
 				httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
 				httpClient.DefaultRequestHeaders.Add("User-Agent", "sefbkn.github.io");

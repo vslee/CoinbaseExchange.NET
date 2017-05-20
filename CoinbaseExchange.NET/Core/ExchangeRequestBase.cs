@@ -10,27 +10,21 @@ namespace CoinbaseExchange.NET.Core
     public abstract class ExchangeRequestBase
     {
         public string Method { get; private set; }
-        public double TimeStamp { get; private set; }
 		/// <summary>
 		/// relative URL
 		/// </summary>
         public string RequestUrl { get; protected set; }
         public string RequestBody { get; protected set; }
 
-        public bool IsExpired
-        {
-            get { return (GetCurrentUnixTimeStamp() - TimeStamp) >= 30; } 
-        }
+   //     public bool IsExpired
+   //     {
+			//// Your timestamp must be within 30 seconds of the api service time or your request will be considered expired and rejected. We recommend using the time endpoint to query for the API server time if you believe there many be time skew between your server and the API servers.
+			////get { return (GetCurrentUnixTimeStamp() - TimeStamp) >= 30; } 
+   //     }
 
         protected ExchangeRequestBase(string method)
         {
             this.Method = method;
-            this.TimeStamp = DateTime.UtcNow.ToUnixTimestamp();
-        }
-
-        protected virtual double GetCurrentUnixTimeStamp()
-        {
-            return DateTime.UtcNow.ToUnixTimestamp();
         }
     }
 }

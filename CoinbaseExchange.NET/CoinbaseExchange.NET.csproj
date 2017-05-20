@@ -66,8 +66,10 @@
     <Compile Include="Endpoints\OrderBook\BidAskOrder.cs" />
     <Compile Include="Endpoints\OrderBook\GetProductOrderBookRequest.cs" />
     <Compile Include="Endpoints\OrderBook\GetProductOrderBookResponse.cs" />
+    <Compile Include="Endpoints\OrderBook\ProductOrderBookClient.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeMessage.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookClient.cs" />
+    <Compile Include="Endpoints\OrderBook\RealtimeOrderBookSubscription.cs" />
     <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersRequest.cs" />
     <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\PersonalOrder.cs" />
