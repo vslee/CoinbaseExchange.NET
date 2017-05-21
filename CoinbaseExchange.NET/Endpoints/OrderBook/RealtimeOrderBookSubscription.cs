@@ -12,6 +12,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 {
 	public class RealtimeOrderBookSubscription : ExchangeClientBase
 	{
+		public static readonly Uri WSS_SANDBOX_ENDPOINT_URL = new Uri("wss://ws-feed-public.sandbox.gdax.com");
+		public static readonly Uri WSS_ENDPOINT_URL = new Uri("wss://ws-feed.gdax.com");
 		private readonly string ProductString;
 		public Action<RealtimeReceived> RealtimeReceived;
 		public Action<RealtimeOpen> RealtimeOpen;
@@ -20,7 +22,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public Action<RealtimeChange> RealtimeChange;
 		public Action<RealtimeError> RealtimeError;
 
-		public RealtimeOrderBookSubscription(CBAuthenticationContainer auth, string ProductString) : base(auth)
+		public RealtimeOrderBookSubscription(string ProductString, CBAuthenticationContainer auth = null) : base(auth)
 		{ // + eventually can take an array of productStrings and subscribe simultaneously 
 			this.ProductString = ProductString;
 		}
@@ -34,17 +36,24 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             if (String.IsNullOrWhiteSpace(ProductString))
                 throw new ArgumentNullException("product");
 
-			var sandbox_uri = new Uri("wss://ws-feed-public.sandbox.gdax.com/users/self");
-			var uri = new Uri("wss://ws-feed.gdax.com/users/self");
             var webSocketClient = new ClientWebSocket();
             var cancellationToken = new CancellationToken();
-			var signBlock = _authContainer.ComputeSignature(relativeUrl: "/users/self", method: "GET", body: "");
-			//var requestString = String.Format(@"{{""type"": ""subscribe"",""product_id"": ""{0}""}}", product);
-			var requestString = String.Format(
-				@"{{""type"": ""subscribe"",""product_id"": ""{0}"",""signature"": ""{1}"",""key"": ""{2}"",""passphrase"": ""{3}"",""timestamp"": ""{4}""}}",
-				ProductString, signBlock.Signature, signBlock.ApiKey, signBlock.Passphrase, signBlock.TimeStamp);
+			string requestString;
+			var uri = ExchangeClientBase.IsSandbox ? WSS_SANDBOX_ENDPOINT_URL : WSS_ENDPOINT_URL;
+			if (_authContainer == null)
+			{ // unauthenticated feed 
+				requestString = String.Format(@"{{""type"": ""subscribe"",""product_id"": ""{0}""}}", ProductString);
+			}
+			else
+			{ // authenticated feed
+				var signBlock = _authContainer.ComputeSignature(relativeUrl: "/users/self", method: "GET", body: "");
+				requestString = String.Format(
+					@"{{""type"": ""subscribe"",""product_id"": ""{0}"",""signature"": ""{1}"",""key"": ""{2}"",""passphrase"": ""{3}"",""timestamp"": ""{4}""}}",
+					ProductString, signBlock.Signature, signBlock.ApiKey, signBlock.Passphrase, signBlock.TimeStamp);
+				uri = new Uri(uri, "/users/self");
+			}
 			var requestBytes = UTF8Encoding.UTF8.GetBytes(requestString);
-            await webSocketClient.ConnectAsync(ExchangeClientBase.IsSandbox ? sandbox_uri : uri, cancellationToken);
+            await webSocketClient.ConnectAsync(uri, cancellationToken);
 
             if (webSocketClient.State == WebSocketState.Open)
             {

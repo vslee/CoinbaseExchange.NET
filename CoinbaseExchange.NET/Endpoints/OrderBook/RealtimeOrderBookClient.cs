@@ -43,7 +43,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             }
         }
 
-        public RealtimeOrderBookClient(CBAuthenticationContainer auth, string ProductString)
+        public RealtimeOrderBookClient(string ProductString, CBAuthenticationContainer auth = null)
         {
 			this.ProductString = ProductString;
 			this.productOrderBookClient = new ProductOrderBookClient(auth);
@@ -53,7 +53,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             Sells = new List<BidAskOrder>();
             Buys = new List<BidAskOrder>();
 
-			this.realtimeOrderBookSubscription = new RealtimeOrderBookSubscription(auth, ProductString);
+			this.realtimeOrderBookSubscription = new RealtimeOrderBookSubscription(ProductString, auth);
 			this.realtimeOrderBookSubscription.RealtimeReceived += OnReceived;
 			this.realtimeOrderBookSubscription.RealtimeDone += OnDone;
             ResetStateWithFullOrderBook();

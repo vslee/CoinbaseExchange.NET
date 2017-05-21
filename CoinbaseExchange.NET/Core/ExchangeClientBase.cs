@@ -71,20 +71,23 @@ namespace CoinbaseExchange.NET.Core
             var url = uriBuilder.ToString();
 			var relativeUrlForSignature = baseURI.MakeRelativeUri(uriBuilder.Uri).ToString();
 
-            // Caution: Use the relative URL, *NOT* the absolute one.
-            var signature = _authContainer.ComputeSignature("/" + relativeUrlForSignature, method, body);
 
             using(var httpClient = new HttpClient())
             {
                 HttpResponseMessage response;
 
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-KEY", signature.ApiKey);
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-SIGN", signature.Signature);
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", signature.TimeStamp);
-                httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", signature.Passphrase);
+				if (_authContainer != null)
+				{ // authenticated get, required for querying account specific data, but optional for public data
+					// Caution: Use the relative URL, *NOT* the absolute one.
+					var signature = _authContainer.ComputeSignature("/" + relativeUrlForSignature, method, body);
+					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-KEY", signature.ApiKey);
+					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-SIGN", signature.Signature);
+					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", signature.TimeStamp);
+					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", signature.Passphrase);
+				}
 
 				httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
-				httpClient.DefaultRequestHeaders.Add("User-Agent", "sefbkn.github.io");
+				httpClient.DefaultRequestHeaders.Add("User-Agent", "vslee fork of sefbkn.github.io");
 
                 switch(method)
                 {
