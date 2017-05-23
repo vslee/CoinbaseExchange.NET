@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinbaseExchange.NET", "CoinbaseExchange.NET\CoinbaseExchange.NET.csproj", "{2B3EE98E-D170-460B-9356-505603281E80}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinbaseExchange.Tests", "CoinbaseExchange.Tests\CoinbaseExchange.Tests.csproj", "{8EE373A1-817F-40AE-B2E5-41E336A951A1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VSLee.Utils", "..\..\VSLee.Utils\VSLee.Utils.csproj", "{FC8CC015-72A4-4799-BDE3-6AF86A2C91A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{8EE373A1-817F-40AE-B2E5-41E336A951A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EE373A1-817F-40AE-B2E5-41E336A951A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EE373A1-817F-40AE-B2E5-41E336A951A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC8CC015-72A4-4799-BDE3-6AF86A2C91A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC8CC015-72A4-4799-BDE3-6AF86A2C91A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC8CC015-72A4-4799-BDE3-6AF86A2C91A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC8CC015-72A4-4799-BDE3-6AF86A2C91A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

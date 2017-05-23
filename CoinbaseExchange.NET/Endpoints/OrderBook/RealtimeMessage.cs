@@ -77,14 +77,16 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public string TakerOrderId { get; set; }
         public DateTime Time { get; set; }
         public string Side { get; set; }
+		public decimal Size { get; set; }
 
-        public RealtimeMatch(JToken jToken) : base(jToken)
+		public RealtimeMatch(JToken jToken) : base(jToken)
         {
             this.TradeId = jToken["trade_id"].Value<decimal>();
             this.MakerOrderId = jToken["maker_order_id"].Value<string>();
             this.TakerOrderId = jToken["taker_order_id"].Value<string>();
             this.Time = jToken["time"].Value<DateTime>();
             this.Side = jToken["side"].Value<string>();
+			this.Size = jToken["size"].Value<decimal>();
         }
     }
 
@@ -104,8 +106,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             this.NewSize = jToken["new_size"].Value<decimal>();
             this.OldSize = jToken["old_size"].Value<decimal>();
             this.Side = jToken["side"].Value<string>();
-        }
-    }
+		}
+	}
 
     public class RealtimeError
     {
