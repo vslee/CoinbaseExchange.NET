@@ -72,7 +72,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeMatch : RealtimeMessage
     {
-        public decimal TradeId { get; set; }
+        public long TradeId { get; set; }
         public string MakerOrderId { get; set; }
         public string TakerOrderId { get; set; }
         public DateTime Time { get; set; }
@@ -81,7 +81,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		public RealtimeMatch(JToken jToken) : base(jToken)
         {
-            this.TradeId = jToken["trade_id"].Value<decimal>();
+            this.TradeId = jToken["trade_id"].Value<long>();
             this.MakerOrderId = jToken["maker_order_id"].Value<string>();
             this.TakerOrderId = jToken["taker_order_id"].Value<string>();
             this.Time = jToken["time"].Value<DateTime>();
@@ -111,12 +111,20 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeError
     {
+		/// <summary>
+		/// Will be "error"
+		/// </summary>
 		public string Type { get; set; }
 		public string Message { get; set; }
 		public RealtimeError(JToken jToken)
         {
 			this.Type = jToken["type"].Value<string>();
 			this.Message = jToken["message"].Value<string>();
+		}
+
+		public RealtimeError(string ErrorMsg)
+		{
+			this.Message = ErrorMsg;
 		}
 	}
 }

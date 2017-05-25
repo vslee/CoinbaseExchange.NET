@@ -9,7 +9,7 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 {
 	public class Products
 	{
-		public string Id { get; set; }
+		public string Name { get; set; }
 		public string BaseCurrency { get; set; }
 		public string QuoteCurrency { get; set; }
 		public decimal BaseMinSize { get; set; }
@@ -18,12 +18,27 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 
 		public Products(JToken jToken)
 		{
-			this.Id = jToken["id"].Value<string>();
+			this.Name = jToken["id"].Value<string>();
 			this.BaseCurrency = jToken["base_currency"].Value<string>();
 			this.QuoteCurrency = jToken["quote_currency"].Value<string>();
 			this.BaseMinSize = jToken["base_min_size"].Value<Decimal>();
 			this.BaseMaxSize = jToken["base_max_size"].Value<Decimal>();
 			this.QuoteIncrement = jToken["quote_increment"].Value<string>();
+		}
+
+		public Products(Products anotherProductsObj)
+		{
+			this.Name = anotherProductsObj.Name;
+			this.BaseCurrency = anotherProductsObj.BaseCurrency;
+			this.QuoteCurrency = anotherProductsObj.QuoteCurrency;
+			this.BaseMinSize = anotherProductsObj.BaseMinSize;
+			this.BaseMaxSize = anotherProductsObj.BaseMaxSize;
+			this.QuoteIncrement = anotherProductsObj.QuoteIncrement;
+		}
+
+		public Products()
+		{
+
 		}
 	}
 }

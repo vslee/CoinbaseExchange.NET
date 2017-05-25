@@ -15,6 +15,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public static readonly Uri WSS_SANDBOX_ENDPOINT_URL = new Uri("wss://ws-feed-public.sandbox.gdax.com");
 		public static readonly Uri WSS_ENDPOINT_URL = new Uri("wss://ws-feed.gdax.com");
 		private readonly string ProductString;
+		private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 		public Action<RealtimeReceived> RealtimeReceived;
 		public Action<RealtimeOpen> RealtimeOpen;
 		public Action<RealtimeDone> RealtimeDone;
@@ -36,8 +37,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             if (String.IsNullOrWhiteSpace(ProductString))
                 throw new ArgumentNullException("product");
 
-            var webSocketClient = new ClientWebSocket();
-            var cancellationToken = new CancellationToken();
 			string requestString;
 			var uri = ExchangeClientBase.IsSandbox ? WSS_SANDBOX_ENDPOINT_URL : WSS_ENDPOINT_URL;
 			if (_authContainer == null)
@@ -53,57 +52,83 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 				uri = new Uri(uri, "/users/self");
 			}
 			var requestBytes = UTF8Encoding.UTF8.GetBytes(requestString);
-            await webSocketClient.ConnectAsync(uri, cancellationToken);
+			var subscribeRequest = new ArraySegment<byte>(requestBytes);
+			var cancellationToken = cancellationTokenSource.Token;
+			while (!cancellationToken.IsCancellationRequested)
+			{
+				try
+				{
+					using (var webSocketClient = new ClientWebSocket())
+					{
+						await webSocketClient.ConnectAsync(uri, cancellationToken);
+						if (webSocketClient.State == WebSocketState.Open)
+						{
+							await webSocketClient.SendAsync(subscribeRequest, WebSocketMessageType.Text, true, cancellationToken);
+							while (webSocketClient.State == WebSocketState.Open)
+							{
+								string jsonResponse = "<not assigned>";
+								try
+								{
+									var receiveBuffer = new ArraySegment<byte>(new byte[1024 * 1024 * 5]); // 5MB buffer
+									var webSocketReceiveResult = await webSocketClient.ReceiveAsync(receiveBuffer, cancellationToken);
+									if (webSocketReceiveResult.Count == 0) continue;
 
-            if (webSocketClient.State == WebSocketState.Open)
-            {
-                var subscribeRequest = new ArraySegment<byte>(requestBytes);
-                var sendCancellationToken = new CancellationToken();
-                await webSocketClient.SendAsync(subscribeRequest, WebSocketMessageType.Text, true, sendCancellationToken);
+									jsonResponse = Encoding.UTF8.GetString(receiveBuffer.Array, 0, webSocketReceiveResult.Count);
+									var jToken = JToken.Parse(jsonResponse);
 
-                while (webSocketClient.State == WebSocketState.Open)
-                {
-                    var receiveCancellationToken = new CancellationToken();
-                    var receiveBuffer = new ArraySegment<byte>(new byte[1024 * 1024 * 5]); // 5MB buffer
-                    var webSocketReceiveResult = await webSocketClient.ReceiveAsync(receiveBuffer, receiveCancellationToken);
-                    if (webSocketReceiveResult.Count == 0) continue;
+									var typeToken = jToken["type"];
+									if (typeToken == null)
+									{
+										RealtimeError?.Invoke(new RealtimeError("null typeToken: + " + jsonResponse));
+										continue; // go to next msg
+									}
 
-                    var jsonResponse = Encoding.UTF8.GetString(receiveBuffer.Array, 0, webSocketReceiveResult.Count);
-                    var jToken = JToken.Parse(jsonResponse);
+									var type = typeToken.Value<string>();
+									switch (type)
+									{
+										case "received":
+											RealtimeReceived?.Invoke(new RealtimeReceived(jToken));
+											break;
+										case "open":
+											RealtimeOpen?.Invoke(new RealtimeOpen(jToken));
+											break;
+										case "done":
+											RealtimeDone?.Invoke(new RealtimeDone(jToken));
+											break;
+										case "match":
+											RealtimeMatch?.Invoke(new RealtimeMatch(jToken));
+											break;
+										case "change":
+											RealtimeChange?.Invoke(new RealtimeChange(jToken));
+											break;
+										case "heartbeat":
+											// + should implement this
+											break;
+										case "error":
+											RealtimeError?.Invoke(new RealtimeError(jToken));
+											break;
+										default:
+											break;
+									}
+								}
+								catch (Newtonsoft.Json.JsonReaderException e)
+								{ // Newtonsoft.Json.JsonReaderException occurred Message = Unexpected end of content while loading JObject.Path 'time'
+									RealtimeError?.Invoke(new RealtimeError(e.Message + jsonResponse)); // probably malformed message, so just go to the next msg
+								}
+							}
+						}
+					}
+				}
+				catch (System.Net.WebSockets.WebSocketException e)
+				{ // System.Net.WebSockets.WebSocketException: 'The remote party closed the WebSocket connection without completing the close handshake.'
+					RealtimeError?.Invoke(new RealtimeError(e.Message)); // probably just disconnected, so loop back and reconnect again
+				}
+			}
+		}
 
-                    var typeToken = jToken["type"];
-                    if (typeToken == null) continue;
-
-                    var type = typeToken.Value<string>();
-
-                    switch (type)
-                    {
-                        case "received":
-							RealtimeReceived?.Invoke(new RealtimeReceived(jToken));
-							break;
-                        case "open":
-							RealtimeOpen?.Invoke(new RealtimeOpen(jToken));
-                            break;
-                        case "done":
-							RealtimeDone?.Invoke(new RealtimeDone(jToken));
-                            break;
-                        case "match":
-							RealtimeMatch?.Invoke(new RealtimeMatch(jToken));
-                            break;
-                        case "change":
-							RealtimeChange?.Invoke(new RealtimeChange(jToken));
-                            break;
-						case "heartbeat":
-							// + should implement this
-							break;
-						case "error":
-							RealtimeError?.Invoke(new RealtimeError(jToken));
-							break;
-						default:
-                            break;
-                    }
-                }
-            }
-        }
+		public void UnSubscribe()
+		{
+			cancellationTokenSource.Cancel();
+		}
 	}
 }

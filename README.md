@@ -4,7 +4,7 @@ A C# wrapper around the exchange.coinbase.com REST API
 
 This project is a work in progress.
 
-This is a fork of sefbkn/CoinbaseExchange.NET with some improvments I made
+This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some improvments I made
 
 
 
@@ -20,7 +20,7 @@ This is a fork of sefbkn/CoinbaseExchange.NET with some improvments I made
 * Account endpoint (90%)
 * Fills
 * OrderBook / RealtimeOrderBook
-* PersonalOrders
+* PersonalOrders (with submission and pagination)
 * Products
 
 ## What needs to be completed
