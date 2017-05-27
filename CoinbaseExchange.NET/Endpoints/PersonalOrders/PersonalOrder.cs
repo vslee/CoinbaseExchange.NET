@@ -7,6 +7,21 @@ using System.Threading.Tasks;
 
 namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
+	public enum OrderStatus
+	{
+		// internal program statuses
+		Created, // prior to submission
+		Submitted, // prior to GDAX acknowledgement
+
+		// GDAX statuses
+		Pending, // received by GDAX, prior to being "Received"?
+		Active, // same as "received" realtime state on GDAX
+		Open, // now on the order book 
+		Done, // either cancelled or filled
+		InvalidStatus, // unable to parse GDAX status
+	 // settled (settled is a actually a separate boolean field in GDAX)
+	}
+
 	public class PersonalOrder
 	{
 		public string Id { get; set; }
@@ -26,11 +41,47 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		//		Users listening to streaming market data are encouraged to use the client_oid field to identify their received messages in the feed.The REST response with a server order_id may come after the received message in the public data feed.
 		/// Orders which are no longer resting on the order book, will be marked with the done status. There is a small window between an order being done and settled. An order is settled when all of the fills have settled and the remaining holds (if any) have been removed.
 		/// </summary>
-		public string Status { get; set; }
+		public OrderStatus Status { get; set; }
 		public bool Settled { get; set; }
 
 		public PersonalOrder()
 		{
+		}
+
+		public PersonalOrder(PersonalOrder anotherPersonalOrder)
+		{
+			this.Id = anotherPersonalOrder.Id;
+			this.Price = anotherPersonalOrder.Price;
+			this.Size = anotherPersonalOrder.Size;
+			this.ProductId = anotherPersonalOrder.ProductId;
+			this.Side = anotherPersonalOrder.Side;
+			this.Type = anotherPersonalOrder.Type;
+			this.TimeInForce = anotherPersonalOrder.TimeInForce;
+			this.PostOnly = anotherPersonalOrder.PostOnly;
+			this.CreatedAt = anotherPersonalOrder.CreatedAt;
+			this.FilledFees = anotherPersonalOrder.FilledFees;
+			this.FilledSize = anotherPersonalOrder.FilledSize;
+			this.ExecutedValue = anotherPersonalOrder.ExecutedValue;
+			this.Status = anotherPersonalOrder.Status;
+			this.Settled = anotherPersonalOrder.Settled;
+		}
+
+		/// <summary>
+		/// ability to create a preliminary order in memory prior to submission
+		/// </summary>
+		/// <param name=""></param>
+		/// <param name=""></param>
+		public PersonalOrder(PersonalOrderParams orderParams, OrderStatus status)
+		{
+			this.Id = orderParams.ClientOrderId;
+			this.Price = orderParams.Price;
+			this.Size = orderParams.Size;
+			this.ProductId = orderParams.ProductId;
+			this.Side = orderParams.Side;
+			this.Type = orderParams.Type;
+			this.TimeInForce = orderParams.TimeInForce;
+			this.PostOnly = orderParams.PostOnly != null ? orderParams.PostOnly.Value : false;
+			this.CreatedAt = DateTime.Now;
 		}
 
 		public PersonalOrder(JToken jToken)
@@ -53,7 +104,11 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.FilledFees = jToken["fill_fees"].Value<Decimal>();
 			this.FilledSize = jToken["filled_size"].Value<Decimal>();
 			this.ExecutedValue = jToken["executed_value"].Value<Decimal>();
-			this.Status = jToken["status"].Value<string>();
+			var statusString = jToken["status"].Value<string>();
+			var statusParseSuccess = Enum.TryParse<OrderStatus>(statusString, out var statusEnum);
+			if (statusParseSuccess)
+				this.Status = statusEnum;
+			else this.Status = OrderStatus.InvalidStatus;
 			this.Settled = jToken["settled"].Value<bool>();
 		}
 	}

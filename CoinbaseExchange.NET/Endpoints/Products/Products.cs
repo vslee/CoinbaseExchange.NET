@@ -14,7 +14,7 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 		public string QuoteCurrency { get; set; }
 		public decimal BaseMinSize { get; set; }
 		public decimal BaseMaxSize { get; set; }
-		public string QuoteIncrement { get; set; }
+		public decimal QuoteIncrement { get; set; }
 
 		public Products(JToken jToken)
 		{
@@ -23,7 +23,7 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 			this.QuoteCurrency = jToken["quote_currency"].Value<string>();
 			this.BaseMinSize = jToken["base_min_size"].Value<Decimal>();
 			this.BaseMaxSize = jToken["base_max_size"].Value<Decimal>();
-			this.QuoteIncrement = jToken["quote_increment"].Value<string>();
+			this.QuoteIncrement = jToken["quote_increment"].Value<Decimal>();
 		}
 
 		public Products(Products anotherProductsObj)

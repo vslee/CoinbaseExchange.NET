@@ -16,16 +16,22 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public static readonly Uri WSS_ENDPOINT_URL = new Uri("wss://ws-feed.gdax.com");
 		private readonly string ProductString;
 		private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-		public Action<RealtimeReceived> RealtimeReceived;
-		public Action<RealtimeOpen> RealtimeOpen;
-		public Action<RealtimeDone> RealtimeDone;
-		public Action<RealtimeMatch> RealtimeMatch;
-		public Action<RealtimeChange> RealtimeChange;
-		public Action<RealtimeError> RealtimeError;
+		public event EventHandler<RealtimeReceived> RealtimeReceived;
+		public event EventHandler<RealtimeOpen> RealtimeOpen;
+		public event EventHandler<RealtimeDone> RealtimeDone;
+		public event EventHandler<RealtimeMatch> RealtimeMatch;
+		public event EventHandler<RealtimeChange> RealtimeChange;
+		public event EventHandler<RealtimeError> RealtimeError;
 
 		public RealtimeOrderBookSubscription(string ProductString, CBAuthenticationContainer auth = null) : base(auth)
 		{ // + eventually can take an array of productStrings and subscribe simultaneously 
 			this.ProductString = ProductString;
+		}
+
+		protected virtual void OnRealtimeError(RealtimeError e)
+		{
+			EventHandler<RealtimeError> handler = RealtimeError;
+			handler?.Invoke(this, e);
 		}
 
 		/// <summary>
@@ -79,7 +85,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 									var typeToken = jToken["type"];
 									if (typeToken == null)
 									{
-										RealtimeError?.Invoke(new RealtimeError("null typeToken: + " + jsonResponse));
+										OnRealtimeError(new RealtimeError("null typeToken: + " + jsonResponse));
 										continue; // go to next msg
 									}
 
@@ -87,25 +93,30 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 									switch (type)
 									{
 										case "received":
-											RealtimeReceived?.Invoke(new RealtimeReceived(jToken));
+											EventHandler<RealtimeReceived> receivedHandler = RealtimeReceived;
+											receivedHandler?.Invoke(this, new RealtimeReceived(jToken));
 											break;
 										case "open":
-											RealtimeOpen?.Invoke(new RealtimeOpen(jToken));
+											EventHandler<RealtimeOpen> openHandler = RealtimeOpen;
+											openHandler?.Invoke(this, new RealtimeOpen(jToken));
 											break;
 										case "done":
-											RealtimeDone?.Invoke(new RealtimeDone(jToken));
+											EventHandler<RealtimeDone> doneHandler = RealtimeDone;
+											doneHandler?.Invoke(this, new RealtimeDone(jToken));
 											break;
 										case "match":
-											RealtimeMatch?.Invoke(new RealtimeMatch(jToken));
+											EventHandler<RealtimeMatch> matchHandler = RealtimeMatch;
+											matchHandler?.Invoke(this, new RealtimeMatch(jToken));
 											break;
 										case "change":
-											RealtimeChange?.Invoke(new RealtimeChange(jToken));
+											EventHandler<RealtimeChange> changeHandler = RealtimeChange;
+											changeHandler?.Invoke(this, new RealtimeChange(jToken));
 											break;
 										case "heartbeat":
 											// + should implement this
 											break;
 										case "error":
-											RealtimeError?.Invoke(new RealtimeError(jToken));
+											OnRealtimeError(new RealtimeError(jToken));
 											break;
 										default:
 											break;
@@ -113,7 +124,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 								}
 								catch (Newtonsoft.Json.JsonReaderException e)
 								{ // Newtonsoft.Json.JsonReaderException occurred Message = Unexpected end of content while loading JObject.Path 'time'
-									RealtimeError?.Invoke(new RealtimeError(e.Message + jsonResponse)); // probably malformed message, so just go to the next msg
+									OnRealtimeError(new RealtimeError(e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
 								}
 							}
 						}
@@ -121,7 +132,12 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 				}
 				catch (System.Net.WebSockets.WebSocketException e)
 				{ // System.Net.WebSockets.WebSocketException: 'The remote party closed the WebSocket connection without completing the close handshake.'
-					RealtimeError?.Invoke(new RealtimeError(e.Message)); // probably just disconnected, so loop back and reconnect again
+					OnRealtimeError(new RealtimeError(e.Message)); // probably just disconnected, so loop back and reconnect again
+				}
+				catch (System.OperationCanceledException e)
+				{ // System.OperationCanceledException: 'The operation was canceled.'
+					OnRealtimeError(new RealtimeError("Cancellation successful: " + e.Message));
+					break; // exit loop
 				}
 			}
 		}

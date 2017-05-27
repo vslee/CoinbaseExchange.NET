@@ -36,9 +36,10 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		[JsonProperty("time_in_force")]
 		public string TimeInForce { get; set; }
 		// cancel_after[optional]* min, hour, day
-		// post_only[optional]** Post only flag
 		// overdraft_enabled	* If true funding will be provided if the order’s cost cannot be covered by the account’s balance
 		// funding_amount* Amount of funding to be provided for the order
+		[JsonProperty("post_only")]
+		public bool? PostOnly { get; set; }
 	}
 
 	public class SubmitPersonalOrderRequest : ExchangeRequestBase
