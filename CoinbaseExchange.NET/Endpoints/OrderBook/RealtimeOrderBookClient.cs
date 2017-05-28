@@ -16,7 +16,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
         private object _sellLock = new object();
         private object _buyLock = new object();
-		private readonly Dictionary<string, BidAskOrder> _ordersByID = new Dictionary<string, BidAskOrder>();
+		private readonly Dictionary<Guid, BidAskOrder> _ordersByID = new Dictionary<Guid, BidAskOrder>();
 		public RealtimeOrderBookSubscription RealtimeOrderBookSubscription { get; private set; }
 		ProductOrderBookClient productOrderBookClient;
 
@@ -93,7 +93,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 				AddOrder(order, "buy");
 			}
 
-			this.RealtimeOrderBookSubscription.Subscribe();
+			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(); // don't await bc it won't complete until subscription ends
         }
 
 		private Tuple<object, ObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(string side)
@@ -125,7 +125,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			NotifyPropertyChanged("Spread");
 		}
 
-		private void RemoveOrder(string orderID, string side)
+		private void RemoveOrder(Guid orderID, string side)
 		{
 			var list = GetOrderList(side);
 			lock (list.Item1)

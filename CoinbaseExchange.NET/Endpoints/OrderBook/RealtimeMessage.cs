@@ -25,21 +25,23 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeReceived : RealtimeMessage
     {
-        public string OrderId { get; set; }
+        public Guid OrderId { get; set; }
 		/// <summary>
 		/// The client_oid is different than the server-assigned order id. 
 		/// If you are consuming the public feed and see a received message with your client_oid, 
 		/// you should record the server-assigned order_id as it will be used for future order status updates. 
 		/// The client_oid will NOT be used after the received message is sent.
 		/// </summary>
-		public string ClientOrderId { get; set; }
+		public Guid? ClientOrderId { get; set; }
 		public decimal Size { get; set; }
         public string Side { get; set; }
 
         public RealtimeReceived(JToken jToken) : base(jToken)
         {
-            this.OrderId = jToken["order_id"].Value<string>();
-			this.ClientOrderId = jToken["client_oid"]?.Value<string>();
+            this.OrderId = (Guid)jToken["order_id"];
+			var coidtoken = jToken["client_oid"];
+			if (coidtoken != null)
+			this.ClientOrderId = (Guid)coidtoken;
 			this.Size = jToken["size"].Value<decimal>();
             this.Side = jToken["side"].Value<string>();
 		}
@@ -47,14 +49,14 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeOpen : RealtimeMessage
     {
-        public string OrderId { get; set; }
+        public Guid OrderId { get; set; }
         public decimal RemainingSize { get; set; }
         public string Side { get; set; }
 
         public RealtimeOpen(JToken jToken)
             : base(jToken)
         {
-            this.OrderId = jToken["order_id"].Value<string>();
+            this.OrderId = (Guid)jToken["order_id"];
             this.RemainingSize = jToken["remaining_size"].Value<decimal>();
             this.Side = jToken["side"].Value<string>();
         }
@@ -62,7 +64,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeDone : RealtimeMessage
     {
-        public string OrderId { get; set; }
+        public Guid OrderId { get; set; }
         public decimal RemainingSize { get; set; }
         public string Side { get; set; }
         public string Reason { get; set; }
@@ -70,7 +72,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public RealtimeDone(JToken jToken)
             : base(jToken)
         {
-            this.OrderId = jToken["order_id"].Value<string>();
+            this.OrderId = (Guid)jToken["order_id"];
             this.RemainingSize = jToken["remaining_size"].Value<decimal>();
             this.Side = jToken["side"].Value<string>();
             this.Reason = jToken["reason"].Value<string>();
@@ -81,8 +83,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
     public class RealtimeMatch : RealtimeMessage
     {
         public long TradeId { get; set; }
-        public string MakerOrderId { get; set; }
-        public string TakerOrderId { get; set; }
+        public Guid MakerOrderId { get; set; }
+        public Guid TakerOrderId { get; set; }
         public DateTime Time { get; set; }
         public string Side { get; set; }
 		public decimal Size { get; set; }
@@ -90,8 +92,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public RealtimeMatch(JToken jToken) : base(jToken)
         {
             this.TradeId = jToken["trade_id"].Value<long>();
-            this.MakerOrderId = jToken["maker_order_id"].Value<string>();
-            this.TakerOrderId = jToken["taker_order_id"].Value<string>();
+			this.MakerOrderId = (Guid)jToken["maker_order_id"];
+			this.TakerOrderId = (Guid)jToken["taker_order_id"];
             this.Time = jToken["time"].Value<DateTime>();
             this.Side = jToken["side"].Value<string>();
 			this.Size = jToken["size"].Value<decimal>();
@@ -100,7 +102,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
     public class RealtimeChange : RealtimeMessage
     {
-        public string OrderId { get; set; }
+        public Guid OrderId { get; set; }
         public DateTime Time { get; set; }
         public decimal NewSize { get; set; }
         public decimal OldSize { get; set; }
@@ -109,7 +111,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public RealtimeChange(JToken jToken)
             : base(jToken)
         {
-            this.OrderId = jToken["order_id"].Value<string>();
+            this.OrderId = (Guid)jToken["order_id"];
             this.Time = jToken["time"].Value<DateTime>();
             this.NewSize = jToken["new_size"].Value<decimal>();
             this.OldSize = jToken["old_size"].Value<decimal>();

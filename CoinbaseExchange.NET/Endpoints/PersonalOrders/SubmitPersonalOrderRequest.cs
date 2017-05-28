@@ -12,7 +12,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 	{
 		// client_oid[optional] Order ID selected by you to identify your order
 		[JsonProperty("client_oid")]
-		public string ClientOrderId { get; set; }
+		public Guid? ClientOrderId { get; set; }
 		// type[optional] limit, market, or stop(default is limit)
 		[JsonProperty("type")]
 		public string Type { get; set; }

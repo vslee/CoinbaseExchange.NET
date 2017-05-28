@@ -41,5 +41,19 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			var response = await this.GetResponse(request);
 			return new SubmitPersonalOrderResponse(response);
 		}
+
+		public async Task<CancelPersonalOrderResponse> CancelPersonalOrder(Guid orderID)
+		{
+			var request = new CancelPersonalOrderRequest(orderID);
+			var response = await this.GetResponse(request);
+			return new CancelPersonalOrderResponse(response);
+		}
+
+		public async Task<CancelAllPersonalOrdersResponse> CancelAllPersonalOrders(string product_id = null)
+		{
+			var request = new CancelAllPersonalOrdersRequest(product_id);
+			var response = await this.GetResponse(request);
+			return new CancelAllPersonalOrdersResponse(response);
+		}
 	}
 }

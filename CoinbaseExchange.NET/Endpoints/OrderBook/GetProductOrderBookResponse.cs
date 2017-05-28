@@ -34,7 +34,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             {
                 Price = jArray[0].Value<decimal>(),
                 Size = jArray[1].Value<decimal>(),
-                Id = jArray[2].Value<string>()
+                Id = (Guid)jArray[2]
             };
         }
     }

@@ -11,8 +11,9 @@ namespace CoinbaseExchange.NET.Core
     {
         public string BeforePaginationToken { get; set; }
         public string AfterPaginationToken { get; set; }
+		public string Message { get; set; }
 
-        private ExchangeResponseBase() { }
+		private ExchangeResponseBase() { }
 
         protected ExchangeResponseBase(ExchangeResponse response) { }
     }

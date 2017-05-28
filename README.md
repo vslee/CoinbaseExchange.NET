@@ -13,7 +13,7 @@ This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some impro
 * .NET Framework v4.5.1
 * JSON.NET (via NuGet use: Install-Package Newtonsoft.JSON)
 * VSLee.Utils (https://github.com/vslee/VSLee.Utils)
-
+* RateGate https://github.com/Danthar/RateLimiting
 
 ## What is done already?
 * Authentication

@@ -10,6 +10,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
     {
         public decimal Price { get; set; }
         public decimal Size { get; set; }
-        public string Id { get; set; }
+        public Guid Id { get; set; }
     }
 }

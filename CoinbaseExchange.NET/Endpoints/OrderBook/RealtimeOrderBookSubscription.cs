@@ -1,5 +1,6 @@
 ﻿using CoinbaseExchange.NET.Core;
 using Newtonsoft.Json.Linq;
+using PennedObjects.RateLimiting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public static readonly Uri WSS_SANDBOX_ENDPOINT_URL = new Uri("wss://ws-feed-public.sandbox.gdax.com");
 		public static readonly Uri WSS_ENDPOINT_URL = new Uri("wss://ws-feed.gdax.com");
 		private readonly string ProductString;
+		// The websocket feed is publicly available, but connection to it are rate-limited to 1 per 4 seconds per IP.
+		/// <summary>
+		/// Only for subscribing to Websockets. Polling has its own RateGate
+		/// </summary>
+		private static readonly RateGate rateGateRealtime = new RateGate(occurrences: 1, timeUnit: new TimeSpan(0, 0, seconds: 4));
 		private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 		public event EventHandler<RealtimeReceived> RealtimeReceived;
 		public event EventHandler<RealtimeOpen> RealtimeOpen;
@@ -35,10 +41,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		}
 
 		/// <summary>
+		/// Don't await this - or it won't return until the subscription ends
 		/// Authenticated feed messages will not increment the sequence number. It is currently not possible to detect if an authenticated feed message was dropped.
 		/// </summary>
 		/// <param name="onMessageReceived"></param>
-		public async void Subscribe()
+		public async Task SubscribeAsync()
         {
             if (String.IsNullOrWhiteSpace(ProductString))
                 throw new ArgumentNullException("product");
@@ -69,6 +76,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 						await webSocketClient.ConnectAsync(uri, cancellationToken);
 						if (webSocketClient.State == WebSocketState.Open)
 						{
+							await rateGateRealtime.WaitToProceedAsync(); // don't subscribe at too high of a rate
 							await webSocketClient.SendAsync(subscribeRequest, WebSocketMessageType.Text, true, cancellationToken);
 							while (webSocketClient.State == WebSocketState.Open)
 							{

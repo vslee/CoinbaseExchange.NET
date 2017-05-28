@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,7 +26,8 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 
 	public class PersonalOrder
 	{
-		public string Id { get; set; }
+		[Key] [DatabaseGenerated(DatabaseGeneratedOption.None)]
+		public Guid Id { get; set; }
 		public decimal? Price { get; set; }
 		public decimal? Size { get; set; }
 		public string ProductId { get; set; }
@@ -73,7 +76,9 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		/// <param name=""></param>
 		public PersonalOrder(PersonalOrderParams orderParams, OrderStatus status)
 		{
-			this.Id = orderParams.ClientOrderId;
+			if (orderParams.ClientOrderId == null)
+				throw new ArgumentNullException("orderParams.ClientOrderId");
+			this.Id = orderParams.ClientOrderId.Value;
 			this.Price = orderParams.Price;
 			this.Size = orderParams.Size;
 			this.ProductId = orderParams.ProductId;
@@ -81,12 +86,12 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.Type = orderParams.Type;
 			this.TimeInForce = orderParams.TimeInForce;
 			this.PostOnly = orderParams.PostOnly != null ? orderParams.PostOnly.Value : false;
-			this.CreatedAt = DateTime.Now;
+			this.CreatedAt = DateTime.UtcNow;
 		}
 
 		public PersonalOrder(JToken jToken)
 		{
-			this.Id = jToken["id"].Value<string>();
+			this.Id = (Guid)jToken["id"];
 			var priceToken = jToken["price"];
 			if (priceToken != null)
 				this.Price = priceToken.Value<Decimal>();
@@ -105,7 +110,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.FilledSize = jToken["filled_size"].Value<Decimal>();
 			this.ExecutedValue = jToken["executed_value"].Value<Decimal>();
 			var statusString = jToken["status"].Value<string>();
-			var statusParseSuccess = Enum.TryParse<OrderStatus>(statusString, out var statusEnum);
+			var statusParseSuccess = Enum.TryParse<OrderStatus>(statusString, ignoreCase: true, result: out var statusEnum);
 			if (statusParseSuccess)
 				this.Status = statusEnum;
 			else this.Status = OrderStatus.InvalidStatus;

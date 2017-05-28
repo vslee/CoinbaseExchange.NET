@@ -36,6 +36,7 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
@@ -70,6 +71,10 @@
     <Compile Include="Endpoints\OrderBook\RealtimeMessage.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookClient.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookSubscription.cs" />
+    <Compile Include="Endpoints\PersonalOrders\CancelAllPersonalOrdersRequest.cs" />
+    <Compile Include="Endpoints\PersonalOrders\CancelAllPersonalOrdersResponse.cs" />
+    <Compile Include="Endpoints\PersonalOrders\CancelPersonalOrderRequest.cs" />
+    <Compile Include="Endpoints\PersonalOrders\CancelPersonalOrderResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersRequest.cs" />
     <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\PersonalOrder.cs" />
@@ -96,6 +101,10 @@
     <ProjectReference Include="..\..\..\VSLee.Utils\VSLee.Utils.csproj">
       <Project>{fc8cc015-72a4-4799-bde3-6af86a2c91a9}</Project>
       <Name>VSLee.Utils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RateLimiting\RateLimiting.csproj">
+      <Project>{860e607a-019a-4d9d-8e07-bd7fe43be4ae}</Project>
+      <Name>RateLimiting</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
