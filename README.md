@@ -20,7 +20,7 @@ This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some impro
 * Account endpoint (90%)
 * Fills
 * OrderBook / RealtimeOrderBook
-* PersonalOrders (with submission and pagination)
+* PersonalOrders (with submission, cancellation, and pagination)
 * Products
 
 ## What needs to be completed

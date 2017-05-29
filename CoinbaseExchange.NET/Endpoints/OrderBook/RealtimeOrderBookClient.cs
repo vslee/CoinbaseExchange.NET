@@ -1,4 +1,5 @@
 ﻿using CoinbaseExchange.NET.Core;
+using CoinbaseExchange.NET.Endpoints.PersonalOrders;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,11 +15,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 	{
 		private readonly string ProductString;
 
-        private object _sellLock = new object();
-        private object _buyLock = new object();
+        private readonly object _sellLock = new object();
+        private readonly object _buyLock = new object();
 		private readonly Dictionary<Guid, BidAskOrder> _ordersByID = new Dictionary<Guid, BidAskOrder>();
 		public RealtimeOrderBookSubscription RealtimeOrderBookSubscription { get; private set; }
-		ProductOrderBookClient productOrderBookClient;
+		readonly ProductOrderBookClient productOrderBookClient;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -57,6 +58,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 		}
 
+		public decimal GetBest(Side side)
+		{
+			return side == Side.Buy ? BestBuy : BestSell;
+		}
+
 		public RealtimeOrderBookClient(string ProductString, CBAuthenticationContainer auth = null)
         {
 			this.ProductString = ProductString;
@@ -70,7 +76,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			this.RealtimeOrderBookSubscription.RealtimeDone += OnDone;
 			this.RealtimeOrderBookSubscription.RealtimeMatch += OnMatch;
 			this.RealtimeOrderBookSubscription.RealtimeChange += OnChange;
-			ResetStateWithFullOrderBook();
+			//await ResetStateWithFullOrderBook();
         }
 
 		class DescendingComparer<T> : IComparer<T> where T : IComparable<T>
@@ -81,31 +87,31 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 		}
 
-		private async void ResetStateWithFullOrderBook()
+		public async Task ResetStateWithFullOrderBookAsync()
         {
             var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
 			foreach (var order in response.Sells)
 			{ // no need to lock here bc lock is in AddOrder()
-				AddOrder(order, "sell");
+				AddOrder(order, Side.Sell);
 			}
 			foreach (var order in response.Buys)
 			{
-				AddOrder(order, "buy");
+				AddOrder(order, Side.Buy);
 			}
 
 			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(); // don't await bc it won't complete until subscription ends
         }
 
-		private Tuple<object, ObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(string side)
+		private Tuple<object, ObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(Side side)
 		{
-			if (side == "buy")
+			if (side == Side.Buy)
 				return new Tuple<object, ObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>>(
 					_buyLock, Buys);
 			else return new Tuple<object, ObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>>(
 					_sellLock, Sells);
 		}
 
-		private void AddOrder(BidAskOrder order, string side)
+		private void AddOrder(BidAskOrder order, Side side)
 		{
 			var list = GetOrderList(side);
 			lock (list.Item1)
@@ -125,7 +131,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			NotifyPropertyChanged("Spread");
 		}
 
-		private void RemoveOrder(Guid orderID, string side)
+		private void RemoveOrder(Guid orderID, Side side)
 		{
 			var list = GetOrderList(side);
 			lock (list.Item1)

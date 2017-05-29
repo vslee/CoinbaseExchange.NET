@@ -9,8 +9,8 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 {
 	public class ProductsClient : ExchangeClientBase
 	{
-		public ProductsClient(CBAuthenticationContainer authenticationContainer) 
-			: base(authenticationContainer)
+		public ProductsClient() // no need to authenticate to get products list
+			: base(null)
 		{
 
 		}

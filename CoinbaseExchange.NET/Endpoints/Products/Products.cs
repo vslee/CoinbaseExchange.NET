@@ -12,8 +12,17 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 		public string Name { get; set; }
 		public string BaseCurrency { get; set; }
 		public string QuoteCurrency { get; set; }
+		/// <summary>
+		/// min and max order size
+		/// </summary>
 		public decimal BaseMinSize { get; set; }
+		/// <summary>
+		/// min and max order size
+		/// </summary>
 		public decimal BaseMaxSize { get; set; }
+		/// <summary>
+		///  min order price as well as the price increment
+		/// </summary>
 		public decimal QuoteIncrement { get; set; }
 
 		public Products(JToken jToken)

@@ -1,5 +1,7 @@
 ﻿using CoinbaseExchange.NET.Core;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +20,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		public string Type { get; set; }
 		// side buy or sell
 		[JsonProperty("side")]
-		public string Side { get; set; }
+		public Side Side { get; set; }
 		// product_id A valid product id
 		[JsonProperty("product_id")]
 		public string ProductId { get; set; }
@@ -52,8 +54,18 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 					Newtonsoft.Json.Formatting.None,
 					new JsonSerializerSettings
 					{
-						NullValueHandling = NullValueHandling.Ignore
+						NullValueHandling = NullValueHandling.Ignore,
+						Converters = new List<JsonConverter> { new StringEnumConverter { CamelCaseText = true } },
+						ContractResolver = new LowercaseContractResolver()
 					});
 		}
+	}
+
+	public class LowercaseContractResolver : DefaultContractResolver
+	{
+		protected override string ResolvePropertyName(string propertyName)
+		{
+			return propertyName.ToLower();
+		} 
 	}
 }

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using CoinbaseExchange.NET.Endpoints.PersonalOrders;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		/// </summary>
 		public Guid? ClientOrderId { get; set; }
 		public decimal Size { get; set; }
-        public string Side { get; set; }
+        public Side Side { get; set; }
 
         public RealtimeReceived(JToken jToken) : base(jToken)
         {
@@ -43,39 +44,48 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			if (coidtoken != null)
 			this.ClientOrderId = (Guid)coidtoken;
 			this.Size = jToken["size"].Value<decimal>();
-            this.Side = jToken["side"].Value<string>();
+			var sideString = jToken["side"].Value<string>();
+			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
+			if (sideParseSuccess)
+				this.Side = sideEnum;
 		}
-    }
+	}
 
     public class RealtimeOpen : RealtimeMessage
     {
         public Guid OrderId { get; set; }
         public decimal RemainingSize { get; set; }
-        public string Side { get; set; }
+        public Side Side { get; set; }
 
         public RealtimeOpen(JToken jToken)
             : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
             this.RemainingSize = jToken["remaining_size"].Value<decimal>();
-            this.Side = jToken["side"].Value<string>();
-        }
-    }
+			var sideString = jToken["side"].Value<string>();
+			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
+			if (sideParseSuccess)
+				this.Side = sideEnum;
+		}
+	}
 
     public class RealtimeDone : RealtimeMessage
     {
         public Guid OrderId { get; set; }
         public decimal RemainingSize { get; set; }
-        public string Side { get; set; }
+        public Side Side { get; set; }
         public string Reason { get; set; }
 
         public RealtimeDone(JToken jToken)
             : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
-            this.RemainingSize = jToken["remaining_size"].Value<decimal>();
-            this.Side = jToken["side"].Value<string>();
-            this.Reason = jToken["reason"].Value<string>();
+			this.RemainingSize = jToken["remaining_size"].Value<decimal>();
+			var sideString = jToken["side"].Value<string>();
+			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
+			if (sideParseSuccess)
+				this.Side = sideEnum;
+			this.Reason = jToken["reason"].Value<string>();
         }
 
     }
@@ -86,7 +96,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public Guid MakerOrderId { get; set; }
         public Guid TakerOrderId { get; set; }
         public DateTime Time { get; set; }
-        public string Side { get; set; }
+        public Side Side { get; set; }
 		public decimal Size { get; set; }
 
 		public RealtimeMatch(JToken jToken) : base(jToken)
@@ -95,7 +105,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			this.MakerOrderId = (Guid)jToken["maker_order_id"];
 			this.TakerOrderId = (Guid)jToken["taker_order_id"];
             this.Time = jToken["time"].Value<DateTime>();
-            this.Side = jToken["side"].Value<string>();
+			var sideString = jToken["side"].Value<string>();
+			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
+			if (sideParseSuccess)
+				this.Side = sideEnum;
 			this.Size = jToken["size"].Value<decimal>();
         }
     }
@@ -106,7 +119,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public DateTime Time { get; set; }
         public decimal NewSize { get; set; }
         public decimal OldSize { get; set; }
-        public string Side { get; set; }
+        public Side Side { get; set; }
 
         public RealtimeChange(JToken jToken)
             : base(jToken)
@@ -115,7 +128,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             this.Time = jToken["time"].Value<DateTime>();
             this.NewSize = jToken["new_size"].Value<decimal>();
             this.OldSize = jToken["old_size"].Value<decimal>();
-            this.Side = jToken["side"].Value<string>();
+			var sideString = jToken["side"].Value<string>();
+			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
+			if (sideParseSuccess)
+				this.Side = sideEnum;
 		}
 	}
 

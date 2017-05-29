@@ -83,10 +83,8 @@ namespace CoinbaseExchange.NET.Core
             var url = uriBuilder.ToString();
 			var relativeUrlForSignature = baseURI.MakeRelativeUri(uriBuilder.Uri).ToString();
 
-
             using(var httpClient = new HttpClient())
             {
-
 				if (_authContainer != null)
 				{ // authenticated get, required for querying account specific data, but optional for public data
 				  // Caution: Use the relative URL, *NOT* the absolute one.
@@ -101,7 +99,7 @@ namespace CoinbaseExchange.NET.Core
 				httpClient.DefaultRequestHeaders.Add("User-Agent", "vslee fork of sefbkn.github.io");
 
 				HttpResponseMessage response;
-				rateGatePolling.WaitToProceed();
+				await rateGatePolling.WaitToProceedAsync();
 				switch (method)
 				{
 					case "GET":
