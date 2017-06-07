@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace CoinbaseExchange.NET.Core
 {
-    public abstract class ExchangePageableResponseBase
+    public abstract class ExchangePageableResponseBase : ExchangeResponseBase
     {
         public string BeforePaginationToken { get; set; }
         public string AfterPaginationToken { get; set; }
 
-        protected ExchangePageableResponseBase(ExchangeResponse response)
+        protected ExchangePageableResponseBase(ExchangeResponse response) : base(response)
         {
             var beforeHeader = response.Headers.LastOrDefault(x => x.Key != null && x.Key.ToUpper() == "CB-BEFORE");
             var afterHeader = response.Headers.LastOrDefault(x => x.Key != null && x.Key.ToUpper() == "CB-AFTER");

@@ -17,7 +17,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 
 		Int16 pageNumber = 0;
 
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrders(string[] Status = null, Int16 cursor = 0)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersAsync(string[] Status = null, Int16 cursor = 0)
 		{
 			this.pageNumber = cursor;
 			var request = new GetPersonalOrdersRequest(Status: Status, cursor: cursor);
@@ -25,31 +25,31 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			return new GetPersonalOrdersResponse(response);
 		}
 
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageBefore(string[] Status = null)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageBeforeAsync(string[] Status = null)
 		{
-			return await GetPersonalOrders(Status, (Int16)(pageNumber-1));
+			return await GetPersonalOrdersAsync(Status, (Int16)(pageNumber-1));
 		}
 
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageAfter(string[] Status = null)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageAfterAsync(string[] Status = null)
 		{
-			return await GetPersonalOrders(Status, (Int16)(pageNumber+1));
+			return await GetPersonalOrdersAsync(Status, (Int16)(pageNumber+1));
 		}
 
-		public async Task<SubmitPersonalOrderResponse> SubmitPersonalOrder(PersonalOrderParams orderParams)
+		public async Task<SubmitPersonalOrderResponse> SubmitPersonalOrderAsync(PersonalOrderParams orderParams)
 		{
 			var request = new SubmitPersonalOrderRequest(orderParams);
 			var response = await this.GetResponse(request);
 			return new SubmitPersonalOrderResponse(response);
 		}
 
-		public async Task<CancelPersonalOrderResponse> CancelPersonalOrder(Guid orderID)
+		public async Task<CancelPersonalOrderResponse> CancelPersonalOrderAsync(Guid orderID)
 		{
 			var request = new CancelPersonalOrderRequest(orderID);
 			var response = await this.GetResponse(request);
 			return new CancelPersonalOrderResponse(response);
 		}
 
-		public async Task<CancelAllPersonalOrdersResponse> CancelAllPersonalOrders(string product_id = null)
+		public async Task<CancelAllPersonalOrdersResponse> CancelAllPersonalOrdersAsync(string product_id = null)
 		{
 			var request = new CancelAllPersonalOrdersRequest(product_id);
 			var response = await this.GetResponse(request);

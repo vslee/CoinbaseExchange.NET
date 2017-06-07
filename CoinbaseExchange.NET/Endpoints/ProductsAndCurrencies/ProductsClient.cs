@@ -1,4 +1,5 @@
 ﻿using CoinbaseExchange.NET.Core;
+using CoinbaseExchange.NET.Endpoints.ProductsAndCurrencies;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,14 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 			var response = await this.GetResponse(request);
 			var productsResponse = new GetProductsResponse(response);
 			return productsResponse;
+		}
+
+		public async Task<GetCurrenciesResponse> GetCurrenciesAsync()
+		{
+			var request = new GetCurrenciesRequest();
+			var response = await this.GetResponse(request);
+			var currenciesResponse = new GetCurrenciesResponse(response);
+			return currenciesResponse;
 		}
 	}
 }

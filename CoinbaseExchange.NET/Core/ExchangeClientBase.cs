@@ -1,5 +1,4 @@
 ﻿using CoinbaseExchange.NET.Endpoints.PersonalOrders;
-using PennedObjects.RateLimiting;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +11,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using VSLee.Utils;
 
 namespace CoinbaseExchange.NET.Core
 {
@@ -82,6 +82,7 @@ namespace CoinbaseExchange.NET.Core
             var method = request.Method;
             var url = uriBuilder.ToString();
 			var relativeUrlForSignature = baseURI.MakeRelativeUri(uriBuilder.Uri).ToString();
+			await rateGatePolling.WaitToProceedAsync(); // rate limit prior to TimeStamp being generated
 
             using(var httpClient = new HttpClient())
             {
@@ -99,7 +100,6 @@ namespace CoinbaseExchange.NET.Core
 				httpClient.DefaultRequestHeaders.Add("User-Agent", "vslee fork of sefbkn.github.io");
 
 				HttpResponseMessage response;
-				await rateGatePolling.WaitToProceedAsync();
 				switch (method)
 				{
 					case "GET":

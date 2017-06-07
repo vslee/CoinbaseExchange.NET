@@ -15,8 +15,15 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		public GetPersonalOrdersResponse(ExchangeResponse response) : base(response)
         {
 			var json = response.ContentBody;
-			var jArray = JArray.Parse(json);
-			PersonalOrders = jArray.Select(elem => new PersonalOrder(elem)).ToList();
+			var token = JToken.Parse(json);
+			if (token is JArray)
+			{
+				PersonalOrders = token.Select(elem => new PersonalOrder(elem)).ToList();
+			}
+			else if (token is JObject)
+			{
+				this.Message = "GetPersonalOrdersResponse: " + token["message"].Value<string>();
+			}
 		}
 	}
 }

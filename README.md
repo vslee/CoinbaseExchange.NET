@@ -1,19 +1,17 @@
-# CoinbaseExchange.NET
+# GDAX/CoinbaseExchange.NET
 
-A C# wrapper around the exchange.coinbase.com REST API
+A C# wrapper around the GDAX/Coinbase exchange API
 
-This project is a work in progress.
-
-This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some improvments I made
+This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some improvements I made
 
 
 
 ## Dependencies
 
-* .NET Framework v4.5.1
+* .NET Framework v4.5.1 or greater
 * JSON.NET (via NuGet use: Install-Package Newtonsoft.JSON)
 * VSLee.Utils (https://github.com/vslee/VSLee.Utils)
-* RateGate https://github.com/Danthar/RateLimiting
+* RateGate (included in VSLee.Utils)
 
 ## What is done already?
 * Authentication

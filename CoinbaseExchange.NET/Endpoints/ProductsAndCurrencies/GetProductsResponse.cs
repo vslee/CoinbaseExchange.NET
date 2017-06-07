@@ -10,13 +10,13 @@ namespace CoinbaseExchange.NET.Endpoints.Products
 {
 	public class GetProductsResponse : ExchangeResponseBase
 	{
-		public IEnumerable<Products> Products { get; private set; }
+		public IEnumerable<Product> Products { get; private set; }
 
 		public GetProductsResponse(ExchangeResponse response) : base(response)
         {
 			var json = response.ContentBody;
 			var jArray = JArray.Parse(json);
-			Products = jArray.Select(elem => new Products(elem)).ToList();
+			Products = jArray.Select(elem => new Product(elem)).ToList();
 		}
 	}
 }

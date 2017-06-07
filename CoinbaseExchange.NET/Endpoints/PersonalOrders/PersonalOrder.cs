@@ -61,11 +61,9 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		[NotMapped]
 		public string ErrorParsing { get; set; }
 
-	public PersonalOrder()
-		{
-		}
+		public PersonalOrder() { }
 
-		public PersonalOrder(PersonalOrder anotherPersonalOrder)
+		public PersonalOrder(PersonalOrder anotherPersonalOrder) : this()
 		{
 			this.ServerOrderId = anotherPersonalOrder.ServerOrderId;
 			this.Price = anotherPersonalOrder.Price;
@@ -88,7 +86,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		/// </summary>
 		/// <param name=""></param>
 		/// <param name=""></param>
-		public PersonalOrder(PersonalOrderParams orderParams, OrderStatus status)
+		public PersonalOrder(PersonalOrderParams orderParams, OrderStatus status) : this()
 		{
 			if (orderParams.ClientOrderId == null)
 				throw new ArgumentNullException("orderParams.ClientOrderId");
@@ -103,7 +101,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.CreatedAt = DateTime.UtcNow;
 		}
 
-		public PersonalOrder(JToken jToken)
+		public PersonalOrder(JToken jToken) : this()
 		{
 			this.ServerOrderId = (Guid)jToken["id"];
 			var priceToken = jToken["price"];

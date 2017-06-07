@@ -26,7 +26,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			}
 			else if (token is JObject)
 			{
-				this.Message = token["message"].Value<string>();
+				this.Message = "CancelPersonalOrderResponse: " + token["message"].Value<string>();
 			}
 		}
 	}

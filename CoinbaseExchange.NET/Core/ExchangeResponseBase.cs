@@ -9,8 +9,6 @@ namespace CoinbaseExchange.NET.Core
 {
     public abstract class ExchangeResponseBase
     {
-        public string BeforePaginationToken { get; set; }
-        public string AfterPaginationToken { get; set; }
 		public string Message { get; set; }
 
 		private ExchangeResponseBase() { }

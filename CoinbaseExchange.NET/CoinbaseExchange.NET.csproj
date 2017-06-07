@@ -81,10 +81,13 @@
     <Compile Include="Endpoints\PersonalOrders\PersonalOrdersClient.cs" />
     <Compile Include="Endpoints\PersonalOrders\SubmitPersonalOrderRequest.cs" />
     <Compile Include="Endpoints\PersonalOrders\SubmitPersonalOrderResponse.cs" />
-    <Compile Include="Endpoints\Products\GetProductsRequest.cs" />
-    <Compile Include="Endpoints\Products\GetProductsResponse.cs" />
-    <Compile Include="Endpoints\Products\Products.cs" />
-    <Compile Include="Endpoints\Products\ProductsClient.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\Currency.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\GetCurrenciesRequest.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\GetCurrenciesResponse.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\GetProductsRequest.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\GetProductsResponse.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\Product.cs" />
+    <Compile Include="Endpoints\ProductsAndCurrencies\ProductsClient.cs" />
     <Compile Include="Errors\ExchangeClientError.cs" />
     <Compile Include="Core\ExchangePageableRequestBase.cs" />
     <Compile Include="Core\ExchangeRequestBase.cs" />
@@ -101,10 +104,6 @@
     <ProjectReference Include="..\..\..\VSLee.Utils\VSLee.Utils.csproj">
       <Project>{fc8cc015-72a4-4799-bde3-6af86a2c91a9}</Project>
       <Name>VSLee.Utils</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RateLimiting\RateLimiting.csproj">
-      <Project>{860e607a-019a-4d9d-8e07-bd7fe43be4ae}</Project>
-      <Name>RateLimiting</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

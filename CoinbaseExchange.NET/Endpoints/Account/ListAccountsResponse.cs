@@ -16,9 +16,15 @@ namespace CoinbaseExchange.NET.Endpoints.Account
         public ListAccountsResponse(ExchangeResponse response) : base(response)
         {
             var json = response.ContentBody;
-            var jArray = JArray.Parse(json);
-
-            Accounts = jArray.Select(elem => new Account(elem)).ToList();
+			var token = JToken.Parse(json);
+			if (token is JArray)
+			{
+				Accounts = token.Select(elem => new Account(elem)).ToList();
+			}
+			else if (token is JObject)
+			{
+				this.Message = "ListAccountsResponse: " + token["message"].Value<string>();
+			}
         }
     }
 }
