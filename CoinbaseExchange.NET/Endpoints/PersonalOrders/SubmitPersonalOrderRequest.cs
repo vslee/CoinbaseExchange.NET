@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VSLee.Utils.ExchangeBase;
 
 namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
@@ -17,13 +18,13 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		public Guid? ClientOrderId { get; set; }
 		// type[optional] limit, market, or stop(default is limit)
 		[JsonProperty("type")]
-		public string Type { get; set; }
+		public OrderType Type { get; set; }
 		// side buy or sell
 		[JsonProperty("side")]
 		public Side Side { get; set; }
 		// product_id A valid product id
 		[JsonProperty("product_id")]
-		public string ProductId { get; set; }
+		public string ProductName { get; set; }
 		// stp[optional] Self-trade prevention flag
 		// price   Price per bitcoin
 		[JsonProperty("price")]

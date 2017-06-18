@@ -24,7 +24,7 @@ namespace CoinbaseExchange.NET.Core
 		// We throttle private endpoints by user ID: 5 requests per second, up to 10 requests per second in bursts.
 		// We throttle public endpoints by IP: 3 requests per second, up to 6 requests per second in bursts.
 		/// <summary>
-		/// Assuming private (authenticated) access. If unauthenticated, will need to adjust parameters. Realtime has its own RateGate.
+		/// For polling queries. Assuming private (authenticated) access. If unauthenticated, will need to adjust parameters. Realtime has its own RateGate.
 		/// </summary>
 		private static readonly RateGate rateGatePolling = new RateGate(occurrences: 5, timeUnit: new TimeSpan(0, 0, seconds: 1));
 

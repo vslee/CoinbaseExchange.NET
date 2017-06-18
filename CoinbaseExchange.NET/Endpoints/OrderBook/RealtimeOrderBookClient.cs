@@ -8,10 +8,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSLee.Utils;
+using VSLee.Utils.ExchangeBase;
 
 namespace CoinbaseExchange.NET.Endpoints.OrderBook
 {
-    public class RealtimeOrderBookClient : IDisposable, INotifyPropertyChanged
+    public class RealtimeOrderBookClient : IDisposable, INotifyPropertyChanged, IOrderBook<decimal>
 	{
 		private readonly string ProductString;
 
@@ -27,6 +28,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public ObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>> Buys { get; set; }
 
         public decimal Spread => BestSell - BestBuy;
+
+		public decimal Midpoint => (BestSell + BestBuy) / 2;
 
 		public decimal BestBuy
 		{

@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VSLee.Utils.ExchangeBase;
 
 namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
@@ -23,28 +24,30 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 	 // settled (settled is a actually a separate boolean field in GDAX)
 	}
 
-	public enum Side { Buy, Sell }
-
-	public static partial class ExtensionMethods
+	public static partial class EnumExtensionMethods
 	{
-		public static Side OpposingSide(this Side side)
+		public static bool IsInPlay(this OrderStatus orderStatus)
 		{
-			if (side == Side.Buy)
-				return Side.Sell;
-			else
-				return Side.Buy;
+			return InPlay.Contains(orderStatus);
 		}
+		public static OrderStatus[] InPlay => new OrderStatus[]
+		{
+			OrderStatus.Created, OrderStatus.Submitted, OrderStatus.Pending,
+			OrderStatus.Active, OrderStatus.Open
+		};
 	}
-
 
 	public class PersonalOrder
 	{
 		public Guid ServerOrderId { get; set; }
 		public decimal? Price { get; set; }
 		public decimal? Size { get; set; }
-		public string ProductId { get; set; }
+		public string ProductName { get; set; }
 		public Side Side { get; set; }
-		public string Type { get; set; }
+		/// <summary>
+		/// market or limit
+		/// </summary>
+		public OrderType Type { get; set; }
 		public string TimeInForce { get; set; }
 		public bool PostOnly { get; set; }
 		public DateTime CreatedAt { get; set; }
@@ -68,7 +71,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.ServerOrderId = anotherPersonalOrder.ServerOrderId;
 			this.Price = anotherPersonalOrder.Price;
 			this.Size = anotherPersonalOrder.Size;
-			this.ProductId = anotherPersonalOrder.ProductId;
+			this.ProductName = anotherPersonalOrder.ProductName;
 			this.Side = anotherPersonalOrder.Side;
 			this.Type = anotherPersonalOrder.Type;
 			this.TimeInForce = anotherPersonalOrder.TimeInForce;
@@ -79,6 +82,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.ExecutedValue = anotherPersonalOrder.ExecutedValue;
 			this.Status = anotherPersonalOrder.Status;
 			this.Settled = anotherPersonalOrder.Settled;
+			this.ErrorParsing = anotherPersonalOrder.ErrorParsing;
 		}
 
 		/// <summary>
@@ -93,7 +97,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			this.ServerOrderId = orderParams.ClientOrderId.Value;
 			this.Price = orderParams.Price;
 			this.Size = orderParams.Size;
-			this.ProductId = orderParams.ProductId;
+			this.ProductName = orderParams.ProductName;
 			this.Side = orderParams.Side;
 			this.Type = orderParams.Type;
 			this.TimeInForce = orderParams.TimeInForce;
@@ -110,7 +114,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			var sizeToken = jToken["size"];
 			if (sizeToken != null)
 				this.Size = sizeToken.Value<Decimal>();
-			this.ProductId = jToken["product_id"].Value<string>();
+			this.ProductName = jToken["product_id"].Value<string>();
 			var sideString = jToken["side"].Value<string>();
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
@@ -119,7 +123,14 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			{
 				this.ErrorParsing = "Error parsing: " + sideString;
 			}
-			this.Type = jToken["type"].Value<string>();
+			var typeString = jToken["type"].Value<string>();
+			var typeParseSuccess = Enum.TryParse<OrderType>(typeString, ignoreCase: true, result: out var typeEnum);
+			if (typeParseSuccess)
+				this.Type = typeEnum;
+			else
+			{
+				this.ErrorParsing = "Error parsing: " + typeString;
+			}
 			var TIFToken = jToken["time_in_force"];
 			if (TIFToken != null)
 				this.TimeInForce = TIFToken.Value<string>();
