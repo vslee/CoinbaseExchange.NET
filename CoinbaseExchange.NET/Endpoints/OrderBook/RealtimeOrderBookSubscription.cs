@@ -36,8 +36,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		protected virtual void OnRealtimeError(RealtimeError e)
 		{
-			EventHandler<RealtimeError> handler = RealtimeError;
-			handler?.Invoke(this, e);
+			RealtimeError?.Invoke(this, e);
 		}
 
 		/// <summary>

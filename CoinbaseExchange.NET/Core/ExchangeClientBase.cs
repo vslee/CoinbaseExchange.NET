@@ -48,18 +48,22 @@ namespace CoinbaseExchange.NET.Core
 			var nvc = HttpUtility.ParseQueryString(string.Empty);
 			if (request is ExchangePageableRequestBase)
 			{
-				if (requestCasted.Cursor < 0)
-				{
-					nvc["before"] = (Math.Abs(requestCasted.Cursor)).ToString();
-					if (requestCasted.RecordCount != null)
-						nvc["limit"] = requestCasted.RecordCount.Value + 1.ToString();
-				}
-				else if (requestCasted.Cursor > 0)
-				{
-					nvc["after"] = (requestCasted.Cursor).ToString();
-					if (requestCasted.RecordCount != null)
-						nvc["limit"] = requestCasted.RecordCount.Value.ToString();
-				}
+				if (requestCasted.afterCursor != null)
+					nvc["after"] = requestCasted.afterCursor;
+				if (requestCasted.RecordCount != null)
+					nvc["limit"] = requestCasted.RecordCount.Value.ToString();
+				//if (requestCasted.ZeroBasedCursor < 0)
+				//{
+				//	nvc["before"] = (Math.Abs(requestCasted.ZeroBasedCursor-1)).ToString(); // change to 1 based
+				//	if (requestCasted.RecordCount != null)
+				//		nvc["limit"] = requestCasted.RecordCount.Value.ToString();
+				//}
+				//else if (requestCasted.ZeroBasedCursor > 0)
+				//{
+				//	nvc["after"] = (requestCasted.ZeroBasedCursor+1).ToString(); // change to 1 based
+				//	if (requestCasted.RecordCount != null)
+				//		nvc["limit"] = requestCasted.RecordCount.Value.ToString();
+				//}
 				// else it's zero so no need to put any query parameter
 			}
 			if (request is GetPersonalOrdersRequest)

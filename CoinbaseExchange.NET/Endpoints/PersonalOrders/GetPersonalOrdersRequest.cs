@@ -11,8 +11,8 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 	{
 		public string[] Status;
 
-		public GetPersonalOrdersRequest(string[] Status = null, Int16 cursor = 0)
-            : base("GET", cursor: cursor)
+		public GetPersonalOrdersRequest(string[] Status = null, string cursor = null) //Int16 cursor = 0)
+            : base("GET", cursor)
         {
 			this.Status = Status;
 			var urlFormat = String.Format("/orders");

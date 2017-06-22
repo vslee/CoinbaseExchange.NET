@@ -43,6 +43,8 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		// funding_amount* Amount of funding to be provided for the order
 		[JsonProperty("post_only")]
 		public bool? PostOnly { get; set; }
+
+		public PersonalOrderParams() { }
 	}
 
 	public class SubmitPersonalOrderRequest : ExchangeRequestBase

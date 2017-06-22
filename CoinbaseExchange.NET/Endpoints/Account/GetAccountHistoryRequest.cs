@@ -9,7 +9,7 @@ namespace CoinbaseExchange.NET.Endpoints.Account
 {
     public class GetAccountHistoryRequest : ExchangePageableRequestBase
     {
-        public GetAccountHistoryRequest(string accountId) : base("GET")
+        public GetAccountHistoryRequest(string accountId, string cursor) : base("GET", cursor)
         {
             if (String.IsNullOrWhiteSpace(accountId))
                 throw new ArgumentNullException("accountId");

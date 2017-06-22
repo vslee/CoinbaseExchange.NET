@@ -35,16 +35,19 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		/// The client_oid will NOT be used after the received message is sent.
 		/// </summary>
 		public Guid? ClientOrderId { get; set; }
-		public decimal Size { get; set; }
-        public Side Side { get; set; }
+		public decimal? Size { get; set; }
+		// Market orders (indicated by the order_type field) may have an optional funds field which indicates how much quote currency will be used to buy or sell. For example, a funds field of 100.00 for the BTC-USD product would indicate a purchase of up to 100.00 USD worth of bitcoin.
+		public Side Side { get; set; }
 
         public RealtimeReceived(JToken jToken) : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
 			var coidtoken = jToken["client_oid"];
 			if (coidtoken != null)
-			this.ClientOrderId = (Guid)coidtoken;
-			this.Size = jToken["size"].Value<decimal>();
+				this.ClientOrderId = (Guid)coidtoken;
+			var sizeToken = jToken["size"];
+			if (sizeToken != null)
+				this.Size = jToken["size"].Value<decimal>();
 			var sideString = jToken["side"].Value<string>();
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
@@ -73,7 +76,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
     public class RealtimeDone : RealtimeMessage
     {
         public Guid OrderId { get; set; }
-        public decimal RemainingSize { get; set; }
+		/// <summary>
+		/// market orders will not have a remaining_size or price field as they are never on the open order book at a given price.
+		/// </summary>
+		public decimal? RemainingSize { get; set; }
         public Side Side { get; set; }
         public string Reason { get; set; }
 
@@ -81,7 +87,9 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
-			this.RemainingSize = jToken["remaining_size"].Value<decimal>();
+			var RemainingSize = jToken["remaining_size"];
+			if (RemainingSize != null)
+				this.RemainingSize = jToken["remaining_size"].Value<decimal>();
 			var sideString = jToken["side"].Value<string>();
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)

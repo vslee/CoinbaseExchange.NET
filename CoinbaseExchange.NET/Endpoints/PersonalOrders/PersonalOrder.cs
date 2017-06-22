@@ -35,11 +35,20 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			OrderStatus.Created, OrderStatus.Submitted, OrderStatus.Pending,
 			OrderStatus.Active, OrderStatus.Open
 		};
+		public static bool IsSubmittedButNotDone(this OrderStatus orderStatus)
+		{
+			return SubmittedButNotDone.Contains(orderStatus);
+		}
+		public static OrderStatus[] SubmittedButNotDone => new OrderStatus[]
+		{
+			OrderStatus.Submitted, OrderStatus.Pending,
+			OrderStatus.Active, OrderStatus.Open
+		};
 	}
 
 	public class PersonalOrder
 	{
-		public Guid ServerOrderId { get; set; }
+		public Guid? ServerOrderId { get; set; }
 		public decimal? Price { get; set; }
 		public decimal? Size { get; set; }
 		public string ProductName { get; set; }
@@ -94,7 +103,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		{
 			if (orderParams.ClientOrderId == null)
 				throw new ArgumentNullException("orderParams.ClientOrderId");
-			this.ServerOrderId = orderParams.ClientOrderId.Value;
+			//this.ServerOrderId = orderParams.ClientOrderId.Value;
 			this.Price = orderParams.Price;
 			this.Size = orderParams.Size;
 			this.ProductName = orderParams.ProductName;

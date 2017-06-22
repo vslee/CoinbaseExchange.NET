@@ -25,7 +25,7 @@ namespace CoinbaseExchange.NET.Endpoints.Account
 
         public async Task<GetAccountHistoryResponse> GetAccountHistory(string accountId)
         {
-            var request = new GetAccountHistoryRequest(accountId);
+            var request = new GetAccountHistoryRequest(accountId, cursor: null);
             var response = await this.GetResponse(request);
             var accountHistoryResponse = new GetAccountHistoryResponse(response);
             return accountHistoryResponse;

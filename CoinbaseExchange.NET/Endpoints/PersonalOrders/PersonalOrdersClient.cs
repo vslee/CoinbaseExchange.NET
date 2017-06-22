@@ -15,24 +15,36 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 
 		}
 
-		Int16 pageNumber = 0;
+		//Int16 pageNumber = 0;
+		GetPersonalOrdersResponse prevResponse;
 
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersAsync(string[] Status = null, Int16 cursor = 0)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersAsync(string[] Status = null, string cursor = null) // Int16 cursor = 0)
 		{
-			this.pageNumber = cursor;
+			//this.pageNumber = cursor;
 			var request = new GetPersonalOrdersRequest(Status: Status, cursor: cursor);
 			var response = await this.GetResponse(request);
-			return new GetPersonalOrdersResponse(response);
+			prevResponse = new GetPersonalOrdersResponse(response);
+			return prevResponse;
 		}
 
+		/// <summary>
+		/// The page before is a newer page and not one that happened before in chronological time.
+		/// </summary>
+		/// <param name="Status"></param>
+		/// <returns></returns>
 		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageBeforeAsync(string[] Status = null)
 		{
-			return await GetPersonalOrdersAsync(Status, (Int16)(pageNumber-1));
+			return await GetPersonalOrdersAsync(Status, prevResponse.BeforePaginationToken); // (Int16)(pageNumber-1));
 		}
 
+		/// <summary>
+		/// The page after is an older page and not one that happened after this one in chronological time.
+		/// </summary>
+		/// <param name="Status"></param>
+		/// <returns></returns>
 		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageAfterAsync(string[] Status = null)
 		{
-			return await GetPersonalOrdersAsync(Status, (Int16)(pageNumber+1));
+			return await GetPersonalOrdersAsync(Status, prevResponse.AfterPaginationToken); // (, (Int16)(pageNumber+1));
 		}
 
 		public async Task<SubmitPersonalOrderResponse> SubmitPersonalOrderAsync(PersonalOrderParams orderParams)
