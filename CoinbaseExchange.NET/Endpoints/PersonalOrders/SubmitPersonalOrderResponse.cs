@@ -11,7 +11,6 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 	public class SubmitPersonalOrderResponse : ExchangePageableResponseBase
 	{
 		public PersonalOrder SubmittedOrder { get; private set; }
-		public string Message;
 
 		public SubmitPersonalOrderResponse(ExchangeResponse response) : base(response)
         {

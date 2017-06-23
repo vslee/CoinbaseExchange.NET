@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
@@ -82,11 +83,20 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 								string jsonResponse = "<not assigned>";
 								try
 								{
-									var receiveBuffer = new ArraySegment<byte>(new byte[1024 * 1024 * 5]); // 5MB buffer
-									var webSocketReceiveResult = await webSocketClient.ReceiveAsync(receiveBuffer, cancellationToken);
-									if (webSocketReceiveResult.Count == 0) continue;
+									using (var stream = new MemoryStream(1024))
+									{
+										var receiveBuffer = new ArraySegment<byte>(new byte[1024 * 8]); // 100 mb buffer instead of original 5mb
+										WebSocketReceiveResult webSocketReceiveResult;
 
-									jsonResponse = Encoding.UTF8.GetString(receiveBuffer.Array, 0, webSocketReceiveResult.Count);
+										do
+										{
+											webSocketReceiveResult = await webSocketClient.ReceiveAsync(receiveBuffer, cancellationToken);
+											await stream.WriteAsync(receiveBuffer.Array, receiveBuffer.Offset, receiveBuffer.Count);
+										} while (!webSocketReceiveResult.EndOfMessage);
+
+										var message = stream.ToArray().Where(b => b != 0).ToArray();
+										jsonResponse = Encoding.ASCII.GetString(message, 0, message.Length);
+									}
 									var jToken = JToken.Parse(jsonResponse);
 
 									var typeToken = jToken["type"];
@@ -132,6 +142,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 								catch (Newtonsoft.Json.JsonReaderException e)
 								{ // Newtonsoft.Json.JsonReaderException occurred Message = Unexpected end of content while loading JObject.Path 'time'
 									OnRealtimeError(new RealtimeError(e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
+								}
+								catch (ArgumentNullException e)
+								{ // ArgumentNullException occurred Message = Unexpected end of content while loading JObject.Path 'time'
+									OnRealtimeError(new RealtimeError("JSON ArgumentNullException - " + e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
 								}
 							}
 						}
