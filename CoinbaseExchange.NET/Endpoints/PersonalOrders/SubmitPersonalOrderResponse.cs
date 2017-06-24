@@ -12,7 +12,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 	{
 		public PersonalOrder SubmittedOrder { get; private set; }
 
-		public SubmitPersonalOrderResponse(ExchangeResponse response) : base(response)
+		public SubmitPersonalOrderResponse(ExchangeResponse response, SubmitPersonalOrderRequest request) : base(response)
         {
 			var json = response.ContentBody;
 			var jToken = JToken.Parse(json);
@@ -20,7 +20,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 			//{"message":"Insufficient funds"}
 			var msgToken = jToken["message"];
 			if (msgToken != null)
-				Message = "SubmitPersonalOrderResponse: " + msgToken.Value<string>();
+				Message = "SubmitPersonalOrderResponse: " + msgToken.Value<string>() + ", request: " + request.RequestUrl;
 			else
 				SubmittedOrder = new PersonalOrder(jToken);
 		}

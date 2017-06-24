@@ -10,7 +10,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
 	public class GetPersonalOrdersResponse : ExchangePageableResponseBase
 	{
-		public IEnumerable<PersonalOrder> PersonalOrders { get; private set; }
+		public IList<PersonalOrder> PersonalOrders { get; private set; }
 
 		public GetPersonalOrdersResponse(ExchangeResponse response) : base(response)
         {
