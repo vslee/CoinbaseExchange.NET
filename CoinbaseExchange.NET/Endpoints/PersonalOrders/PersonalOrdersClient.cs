@@ -14,14 +14,14 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
         {
 
 		}
-
+		
 		//Int16 pageNumber = 0;
 		GetPersonalOrdersResponse prevResponse;
 
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersAsync(string[] Status = null, string cursor = null) // Int16 cursor = 0)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersAsync(string[] Status = null, string productName = null, string cursor = null) // Int16 cursor = 0)
 		{
 			//this.pageNumber = cursor;
-			var request = new GetPersonalOrdersRequest(Status: Status, cursor: cursor);
+			var request = new GetPersonalOrdersRequest(Status: Status, productName: productName, cursor: cursor);
 			var response = await this.GetResponse(request);
 			prevResponse = new GetPersonalOrdersResponse(response);
 			return prevResponse;
@@ -32,9 +32,9 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		/// </summary>
 		/// <param name="Status"></param>
 		/// <returns></returns>
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageBeforeAsync(string[] Status = null)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageBeforeAsync(string[] Status = null, string productName = null)
 		{
-			return await GetPersonalOrdersAsync(Status, prevResponse.BeforePaginationToken); // (Int16)(pageNumber-1));
+			return await GetPersonalOrdersAsync(Status, productName, cursor: prevResponse.BeforePaginationToken); // (Int16)(pageNumber-1));
 		}
 
 		/// <summary>
@@ -42,9 +42,17 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		/// </summary>
 		/// <param name="Status"></param>
 		/// <returns></returns>
-		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageAfterAsync(string[] Status = null)
+		public async Task<GetPersonalOrdersResponse> GetPersonalOrdersPageAfterAsync(string[] Status = null, string productName = null)
 		{
-			return await GetPersonalOrdersAsync(Status, prevResponse.AfterPaginationToken); // (, (Int16)(pageNumber+1));
+			return await GetPersonalOrdersAsync(Status, productName, cursor: prevResponse.AfterPaginationToken); // (, (Int16)(pageNumber+1));
+		}
+
+		public async Task<GetPersonalOrderResponse> GetPersonalOrderAsync(Guid orderID)
+		{
+			//this.pageNumber = cursor;
+			var request = new GetPersonalOrderRequest(orderID: orderID);
+			var response = await this.GetResponse(request);
+			return new GetPersonalOrderResponse(response);
 		}
 
 		public async Task<SubmitPersonalOrderResponse> SubmitPersonalOrderAsync(PersonalOrderParams orderParams)

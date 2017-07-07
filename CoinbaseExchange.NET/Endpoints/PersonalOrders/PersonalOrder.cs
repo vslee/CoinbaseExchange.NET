@@ -15,6 +15,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		Created, // prior to submission
 		Submitted, // prior to GDAX acknowledgement
 		Rejected, // submitted, but not accepted by GDAX
+		SyntheticFill, // internally filled
 
 		// GDAX statuses
 		Pending, // received by GDAX, prior to being "Received"?
@@ -51,8 +52,8 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		}
 		public static OrderStatus[] Done => new OrderStatus[]
 		{
-			OrderStatus.Done, OrderStatus.Rejected,
-			OrderStatus.InvalidStatus
+			OrderStatus.Done, OrderStatus.SyntheticFill,
+			OrderStatus.Rejected, OrderStatus.InvalidStatus
 		};
 	}
 

@@ -72,6 +72,8 @@ namespace CoinbaseExchange.NET.Core
 				if (requestCasted2.Status != null)
 					foreach (var status in requestCasted2.Status)
 						nvc.Add("status", status);
+				if(requestCasted2.productName != null)
+					nvc.Add("product_id", requestCasted2.productName);
 			}
 			if (request is CancelAllPersonalOrdersRequest)
 			{

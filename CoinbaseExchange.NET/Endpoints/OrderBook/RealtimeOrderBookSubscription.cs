@@ -28,16 +28,18 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public event EventHandler<RealtimeDone> RealtimeDone;
 		public event EventHandler<RealtimeMatch> RealtimeMatch;
 		public event EventHandler<RealtimeChange> RealtimeChange;
-		public event EventHandler<RealtimeError> RealtimeError;
+		/// <summary>
+		/// Error in underlying websocket stream, need to refresh orderbook
+		/// </summary>
+		public event EventHandler<RealtimeError> RealtimeStreamError;
+		/// <summary>
+		/// Token error or cancellation error, no need to restart stream
+		/// </summary>
+		public event EventHandler<RealtimeError> RealtimeDataError;
 
 		public RealtimeOrderBookSubscription(string ProductString, CBAuthenticationContainer auth = null) : base(auth)
 		{ // + eventually can take an array of productStrings and subscribe simultaneously 
 			this.ProductString = ProductString;
-		}
-
-		protected virtual void OnRealtimeError(RealtimeError e)
-		{
-			RealtimeError?.Invoke(this, e);
 		}
 
 		/// <summary>
@@ -102,7 +104,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 									var typeToken = jToken["type"];
 									if (typeToken == null)
 									{
-										OnRealtimeError(new RealtimeError("null typeToken: + " + jsonResponse));
+										RealtimeDataError?.Invoke(this, new RealtimeError("null typeToken: + " + jsonResponse));
 										continue; // go to next msg
 									}
 
@@ -133,7 +135,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 											// + should implement this
 											break;
 										case "error":
-											OnRealtimeError(new RealtimeError(jToken));
+											RealtimeDataError?.Invoke(this, new RealtimeError(jToken));
 											break;
 										default:
 											break;
@@ -141,11 +143,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 								}
 								catch (Newtonsoft.Json.JsonReaderException e)
 								{ // Newtonsoft.Json.JsonReaderException occurred Message = Unexpected end of content while loading JObject.Path 'time'
-									OnRealtimeError(new RealtimeError(e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
+									RealtimeDataError?.Invoke(this, new RealtimeError(e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
 								}
 								catch (ArgumentNullException e)
 								{ // ArgumentNullException occurred Message = Unexpected end of content while loading JObject.Path 'time'
-									OnRealtimeError(new RealtimeError("JSON ArgumentNullException - " + e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
+									RealtimeDataError?.Invoke(this, new RealtimeError("JSON ArgumentNullException - " + e.Message + ", Msg: " + jsonResponse)); // probably malformed message, so just go to the next msg
 								}
 							}
 						}
@@ -153,11 +155,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 				}
 				catch (System.Net.WebSockets.WebSocketException e)
 				{ // System.Net.WebSockets.WebSocketException: 'The remote party closed the WebSocket connection without completing the close handshake.'
-					OnRealtimeError(new RealtimeError(e.Message)); // probably just disconnected, so loop back and reconnect again
+					RealtimeStreamError?.Invoke(this, new RealtimeError(e.Message)); // probably just disconnected, so loop back and reconnect again
 				}
 				catch (System.OperationCanceledException e)
 				{ // System.OperationCanceledException: 'The operation was canceled.'
-					OnRealtimeError(new RealtimeError("Cancellation successful: " + e.Message));
+					RealtimeDataError?.Invoke(this, new RealtimeError("Cancellation successful: " + e.Message));
 					break; // exit loop
 				}
 			}

@@ -75,6 +75,8 @@
     <Compile Include="Endpoints\PersonalOrders\CancelAllPersonalOrdersResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\CancelPersonalOrderRequest.cs" />
     <Compile Include="Endpoints\PersonalOrders\CancelPersonalOrderResponse.cs" />
+    <Compile Include="Endpoints\PersonalOrders\GetPersonalOrderRequest.cs" />
+    <Compile Include="Endpoints\PersonalOrders\GetPersonalOrderResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersRequest.cs" />
     <Compile Include="Endpoints\PersonalOrders\GetPersonalOrdersResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\PersonalOrder.cs" />

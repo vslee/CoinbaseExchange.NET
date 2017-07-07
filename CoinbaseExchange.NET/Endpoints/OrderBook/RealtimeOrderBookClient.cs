@@ -208,56 +208,5 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		{
 			RealtimeOrderBookSubscription.UnSubscribe();
 		}
-
-		//private void OnReceived(RealtimeReceived receivedMessage)
-		//      {
-		//          var order = new BidAskOrder();
-
-		//	if (receivedMessage.Price != null) // no "price" token in market orders
-		//	{
-		//		order.Id = receivedMessage.OrderId;
-		//		order.Price = receivedMessage.Price.Value;
-		//		order.Size = receivedMessage.Size;
-
-		//		if (receivedMessage.Side == "buy")
-		//		{
-		//			lock (_bidLock)
-		//			{
-		//				Buys.Add(order);
-		//				//Buys = _buys.ToList();
-		//			}
-		//		}
-		//		else if (receivedMessage.Side == "sell")
-		//		{
-		//			lock (_askLock)
-		//			{
-		//				Sells.Add(order);
-		//				//Sells = _sells.ToList();
-		//			}
-		//		}
-		//		OnUpdated();
-		//	}
-		//}
-
-		//      private void OnDone(RealtimeDone message)
-		//      {
-		//	if (message.Side == "buy")
-		//	{
-		//		lock (_bidLock)
-		//		{
-		//			Buys.RemoveAll(b => b.Id == message.OrderId);
-		//			//Buys = _buys.ToList();
-		//		}
-		//	}
-		//	else if (message.Side == "sell")
-		//	{
-		//		lock (_askLock)
-		//		{
-		//			Sells.RemoveAll(a => a.Id == message.OrderId);
-		//			//Sells = _sells.ToList();
-		//		}
-		//	}
-		//	OnUpdated(); // probably should be outside of lock
-		//}
 	}
 }
