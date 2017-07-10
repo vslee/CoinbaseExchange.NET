@@ -20,6 +20,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         private readonly object _sellLock = new object();
         private readonly object _buyLock = new object();
 		private readonly Dictionary<Guid, BidAskOrder> _ordersByID = new Dictionary<Guid, BidAskOrder>();
+		bool unSubscribing;
 		public RealtimeOrderBookSubscription RealtimeOrderBookSubscription { get; private set; }
 		readonly ProductOrderBookClient productOrderBookClient;
 
@@ -80,7 +81,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			this.RealtimeOrderBookSubscription.RealtimeDone += OnDone;
 			this.RealtimeOrderBookSubscription.RealtimeMatch += OnMatch;
 			this.RealtimeOrderBookSubscription.RealtimeChange += OnChange;
-			//await ResetStateWithFullOrderBook();
+			this.RealtimeOrderBookSubscription.ConnectionClosed += async (s, e) =>
+			{
+				if (!unSubscribing)
+					await ResetStateWithFullOrderBookAsync();
+			};
         }
 
 		class DescendingComparer<T> : IComparer<T> where T : IComparable<T>
@@ -94,16 +99,18 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		public async Task ResetStateWithFullOrderBookAsync()
         {
             var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
+			Sells.Clear();
 			foreach (var order in response.Sells)
 			{ // no need to lock here bc lock is in AddOrder()
 				AddOrder(order, Side.Sell);
 			}
+			Buys.Clear();
 			foreach (var order in response.Buys)
 			{
 				AddOrder(order, Side.Buy);
 			}
 
-			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(); // don't await bc it won't complete until subscription ends
+			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(reConnectOnDisconnect: false); // don't await bc it won't complete until subscription ends
         }
 
 		private Tuple<object, ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(Side side)
@@ -184,40 +191,40 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			  System.Windows.Threading.DispatcherPriority.Background,
 			  new Action(() =>
 			  { // change to UI thread
-				  var side = match.Side;
-				  var list = GetOrderList(side: side);
-				  decimal newPrice;
-				  lock (list.Item1)
+				  var list = GetOrderList(side: match.Side);
+				  list.Item2.TryGetValue(match.Price.Value, out var linkedList);
+				  if (linkedList == null)
+					  return; // + handle when order is not in book (say program missed some orders being added)
+				  var order = linkedList.Where(o => o.Id == match.MakerOrderId).SingleOrDefault();
+				  if (order != null)
 				  {
-					  list.Item2.TryGetValue(match.Price.Value, out var linkedList);
-					  if (linkedList == null)
-						  return; // handle when order is not in book (say program missed some orders being added)
-					  var order = linkedList.First.Value; // first order in queue gets matched
 					  order.Size -= match.Size;
-					  newPrice = order.Size;
+					  if (order.Size == 0)
+						  RemoveOrder(match.MakerOrderId, side: match.Side);
+					  if (order.Size < 0)
+						  RemoveOrder(match.MakerOrderId, side: match.Side);
 				  }
-				  if (newPrice == 0)
-					  RemoveOrder(match.MakerOrderId, side: side); // keep outside of lock to avoid deadlock
 			  }));
 		}
 
 		private void OnChange(object sender, RealtimeChange change)
 		{
-			System.Windows.Application.Current.Dispatcher.BeginInvoke(
-			  System.Windows.Threading.DispatcherPriority.Background,
-			  new Action(() =>
-			  { // change to UI thread
-				  var list = GetOrderList(side: change.Side);
-				  lock (list.Item1)
-				  {
-					  _ordersByID.TryGetValue(change.OrderId, out var order);
-					  if (order == null)
-						  return; // handle when order is not in book (say program missed some orders being added)
-					  var linkedlist = list.Item2[change.Price.Value];
-					  order.Size = change.NewSize;
-					  // newSize should never be zero so no need to remove
-				  }
-			  }));
+			if (change.NewSize != null)
+				System.Windows.Application.Current.Dispatcher.BeginInvoke(
+				  System.Windows.Threading.DispatcherPriority.Background,
+				  new Action(() =>
+				  { // change to UI thread
+					  var list = GetOrderList(side: change.Side);
+					  lock (list.Item1)
+					  {
+						  _ordersByID.TryGetValue(change.OrderId, out var order);
+						  if (order == null)
+							  return; // + handle when order is not in book (say program missed some orders being added)
+						  var linkedlist = list.Item2[change.Price.Value];
+						  order.Size = change.NewSize.Value;
+						  // newSize should never be zero so no need to remove
+					  }
+				  }));
 		}
 
 		protected virtual void NotifyPropertyChanged(String propertyName)
@@ -227,6 +234,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		public void Dispose()
 		{
+			unSubscribing = true;
 			RealtimeOrderBookSubscription.UnSubscribe();
 		}
 	}

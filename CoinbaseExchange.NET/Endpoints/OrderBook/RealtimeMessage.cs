@@ -126,17 +126,33 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
     {
         public Guid OrderId { get; set; }
         public DateTime Time { get; set; }
-        public decimal NewSize { get; set; }
-        public decimal OldSize { get; set; }
-        public Side Side { get; set; }
+        public decimal? NewSize { get; set; }
+        public decimal? OldSize { get; set; }
+		/// <summary>
+		/// change messages are also sent when a new market order goes through self trade prevention and the funds for the market order have changed.
+		/// </summary>
+		public decimal? NewFunds { get; set; }
+		public decimal? OldFunds { get; set; }
+		public Side Side { get; set; }
 
         public RealtimeChange(JToken jToken)
             : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
             this.Time = jToken["time"].Value<DateTime>();
-            this.NewSize = jToken["new_size"].Value<decimal>();
-            this.OldSize = jToken["old_size"].Value<decimal>();
+
+			var newSizeToken = jToken["new_size"];
+			if (newSizeToken != null) // no "new_size" token in market orders going through self trade prevention
+				this.NewSize = newSizeToken.Value<decimal>();
+			var oldSizeToken = jToken["old_size"];
+			if (oldSizeToken != null) // no "old_size" token in market orders going through self trade prevention
+				this.OldSize = oldSizeToken.Value<decimal>();
+			var newFundsToken = jToken["new_funds"];
+			if (newFundsToken != null) // no "NewFunds" token in regular orders
+				this.NewFunds = newFundsToken.Value<decimal>();
+			var oldFundsToken = jToken["old_funds"];
+			if (oldFundsToken != null) // no "OldFunds" token in regular orders
+				this.NewFunds = oldFundsToken.Value<decimal>();
 			var sideString = jToken["side"].Value<string>();
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)

@@ -1,5 +1,6 @@
 The MIT License (MIT)
 
+Copyright (c) 2017 Victor Lee
 Copyright (c) 2015 Youssef Boukenken
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

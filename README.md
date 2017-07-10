@@ -20,9 +20,12 @@ This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some impro
 * OrderBook / RealtimeOrderBook
 * PersonalOrders (with submission, cancellation, and pagination)
 * Products
+* Note missing pieces below
 
 ## What needs to be completed
 * Last 10% of the Accounts endpoint
   * The API states that there are 4 account history types (deposit, withdraw, match, fee) and does not detail what the structure of the responses will be for each of these. (See ./Endpoints/Account/AccountHistory.cs)
 * The rest of the endpoints
 * Pagination to be spread to all endpoints where it makes sense
+* Bugs. This library has numerous bugs. I have tried to fix as many of them as I could, but undoubtedly many still exist. If you use this, you will likely run into one which causes you to lose a lot of money. You have been warned. 
+* Please feel free to send pull requests fixing any bugs you may have found. 
