@@ -39,7 +39,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		// Market orders (indicated by the order_type field) may have an optional funds field which indicates how much quote currency will be used to buy or sell. For example, a funds field of 100.00 for the BTC-USD product would indicate a purchase of up to 100.00 USD worth of bitcoin.
 		public Side Side { get; set; }
 
-        public RealtimeReceived(JToken jToken) : base(jToken)
+		public RealtimeReceived(JToken jToken) : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
 			var coidtoken = jToken["client_oid"];

@@ -20,6 +20,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         private readonly object _sellLock = new object();
         private readonly object _buyLock = new object();
 		private readonly Dictionary<Guid, BidAskOrder> _ordersByID = new Dictionary<Guid, BidAskOrder>();
+		Int64 currentSequence = -1;
 		bool unSubscribing;
 		public RealtimeOrderBookSubscription RealtimeOrderBookSubscription { get; private set; }
 		readonly ProductOrderBookClient productOrderBookClient;
@@ -81,10 +82,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			this.RealtimeOrderBookSubscription.RealtimeDone += OnDone;
 			this.RealtimeOrderBookSubscription.RealtimeMatch += OnMatch;
 			this.RealtimeOrderBookSubscription.RealtimeChange += OnChange;
-			this.RealtimeOrderBookSubscription.ConnectionClosed += async (s, e) =>
+			this.RealtimeOrderBookSubscription.ConnectionClosed += (s, e) =>
 			{
 				if (!unSubscribing)
-					await ResetStateWithFullOrderBookAsync();
+					ResetStateWithFullOrderBookAsync();
 			};
         }
 
@@ -96,21 +97,48 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 		}
 
-		public async Task ResetStateWithFullOrderBookAsync()
-        {
-            var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
-			Sells.Clear();
-			foreach (var order in response.Sells)
-			{ // no need to lock here bc lock is in AddOrder()
-				AddOrder(order, Side.Sell);
-			}
-			Buys.Clear();
-			foreach (var order in response.Buys)
-			{
-				AddOrder(order, Side.Buy);
-			}
+		public void ResetStateWithFullOrderBookAsync()
+		{
+			currentSequence = -1;
+			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(// don't await bc it won't complete until subscription ends
+				reConnectOnDisconnect: false, processSequence: async (sequence) =>
+				{
+					if (this.currentSequence == -1)
+					{ // https://stackoverflow.com/questions/23442543/using-async-await-with-dispatcher-begininvoke
+						await System.Windows.Application.Current.Dispatcher.Invoke<Task>(
+						  async () =>
+						  { // change to UI thread to use UI dbContext
+								var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
+								Sells.Clear();
+								foreach (var order in response.Sells)
+								{ // no need to lock here bc lock is in AddOrder()
+									AddOrder(order, Side.Sell);
+								}
+								Buys.Clear();
+								foreach (var order in response.Buys)
+								{
+									AddOrder(order, Side.Buy);
+								}
+								this.currentSequence = response.Sequence;
+						  });
+					}
 
-			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(reConnectOnDisconnect: false); // don't await bc it won't complete until subscription ends
+					if (sequence <= this.currentSequence)
+						// ignore older messages (e.g. before order book initialization from getProductOrderBook)
+						return false; // skip this msg
+					else if (sequence > this.currentSequence + 1)
+					{
+						// out of order
+						this.RealtimeOrderBookSubscription.UnSubscribe();
+						ResetStateWithFullOrderBookAsync();
+						return false; // skip this msg
+					}
+					else // sequence == this.currentSequence + 1
+					{
+						this.currentSequence = sequence;
+						return true; // process this msg
+					}
+				});
         }
 
 		private Tuple<object, ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(Side side)

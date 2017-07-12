@@ -42,12 +42,17 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             this.ProductString = ProductString;
         }
 
-        /// <summary>
-        /// Don't await this - or it won't return until the subscription ends
-        /// Authenticated feed messages will not increment the sequence number. It is currently not possible to detect if an authenticated feed message was dropped.
-        /// </summary>
-        /// <param name="onMessageReceived"></param>
-        public async Task SubscribeAsync(bool reConnectOnDisconnect)
+		public async Task SubscribeAsync(bool reConnectOnDisconnect)
+		{
+			await this.SubscribeAsync(reConnectOnDisconnect: reConnectOnDisconnect, processSequence: async (s) => true);
+		}
+
+		/// <summary>
+		/// Don't await this - or it won't return until the subscription ends
+		/// Authenticated feed messages will not increment the sequence number. It is currently not possible to detect if an authenticated feed message was dropped.
+		/// </summary>
+		/// <param name="onMessageReceived"></param>
+		public async Task SubscribeAsync(bool reConnectOnDisconnect, Func<Int64, Task<bool>> processSequence)
 		{
 			if (String.IsNullOrWhiteSpace(ProductString))
 				throw new ArgumentNullException("product");
@@ -84,24 +89,29 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 				switch (type)
 				{
 					case "received":
-						EventHandler<RealtimeReceived> receivedHandler = RealtimeReceived;
-						receivedHandler?.Invoke(this, new RealtimeReceived(jToken));
+						var rr = new RealtimeReceived(jToken);
+						if (processSequence(rr.Sequence).Result)
+							RealtimeReceived?.Invoke(this, rr);
 						break;
 					case "open":
-						EventHandler<RealtimeOpen> openHandler = RealtimeOpen;
-						openHandler?.Invoke(this, new RealtimeOpen(jToken));
+						var ro = new RealtimeOpen(jToken);
+						if (processSequence(ro.Sequence).Result)
+							RealtimeOpen?.Invoke(this, ro);
 						break;
 					case "done":
-						EventHandler<RealtimeDone> doneHandler = RealtimeDone;
-						doneHandler?.Invoke(this, new RealtimeDone(jToken));
+						var rd = new RealtimeDone(jToken);
+						if (processSequence(rd.Sequence).Result)
+							RealtimeDone?.Invoke(this, rd);
 						break;
 					case "match":
-						EventHandler<RealtimeMatch> matchHandler = RealtimeMatch;
-						matchHandler?.Invoke(this, new RealtimeMatch(jToken));
+						var rm = new RealtimeMatch(jToken);
+						if (processSequence(rm.Sequence).Result)
+							RealtimeMatch?.Invoke(this, rm);
 						break;
 					case "change":
-						EventHandler<RealtimeChange> changeHandler = RealtimeChange;
-						changeHandler?.Invoke(this, new RealtimeChange(jToken));
+						var rc = new RealtimeChange(jToken);
+						if (processSequence(rc.Sequence).Result)
+							RealtimeChange?.Invoke(this, rc);
 						break;
 					case "heartbeat":
 						// + should implement this
@@ -113,7 +123,13 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 						break;
 				}
 			};
-			ws.OnError += (s, e) => RealtimeStreamError?.Invoke(this, new RealtimeError(e.Exception + e.Message));
+			ws.OnError += async (s, e) => 
+			{
+				RealtimeStreamError?.Invoke(this, new RealtimeError(e.Exception + e.Message));
+				ConnectionClosed?.Invoke(this, e);
+				if (!unSubscribing & reConnectOnDisconnect)
+					await connectAndSend(requestString);
+			};
 			ws.OnClose += async (s, e) =>
 			{
 				RealtimeStreamError?.Invoke(this, new RealtimeError("Connection closed: " + e.Reason + " Product: " + ProductString));
