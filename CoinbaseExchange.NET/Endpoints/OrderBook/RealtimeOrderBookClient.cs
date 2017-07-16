@@ -82,10 +82,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			this.RealtimeOrderBookSubscription.RealtimeDone += OnDone;
 			this.RealtimeOrderBookSubscription.RealtimeMatch += OnMatch;
 			this.RealtimeOrderBookSubscription.RealtimeChange += OnChange;
-			this.RealtimeOrderBookSubscription.ConnectionClosed += (s, e) =>
+			this.RealtimeOrderBookSubscription.ConnectionClosed += async (s, e) =>
 			{
 				if (!unSubscribing)
-					ResetStateWithFullOrderBookAsync();
+					await ResetStateWithFullOrderBookAsync();
 			};
         }
 
@@ -97,49 +97,54 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 		}
 
-		public void ResetStateWithFullOrderBookAsync()
+		public async Task ResetStateWithFullOrderBookAsync()
 		{
 			currentSequence = -1;
-			var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(// don't await bc it won't complete until subscription ends
-				reConnectOnDisconnect: false, processSequence: async (sequence) =>
-				{
-					if (this.currentSequence == -1)
-					{ // https://stackoverflow.com/questions/23442543/using-async-await-with-dispatcher-begininvoke
-						await System.Windows.Application.Current.Dispatcher.Invoke<Task>(
-						  async () =>
-						  { // change to UI thread to use UI dbContext
-								var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
-								Sells.Clear();
-								foreach (var order in response.Sells)
-								{ // no need to lock here bc lock is in AddOrder()
-									AddOrder(order, Side.Sell);
-								}
-								Buys.Clear();
-								foreach (var order in response.Buys)
-								{
-									AddOrder(order, Side.Buy);
-								}
-								this.currentSequence = response.Sequence;
-						  });
-					}
+			using (var blocker = new SemaphoreSlim(0))
+			{
+				var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(// don't await bc it won't complete until subscription ends
+										reConnectOnDisconnect: false, processSequence: async (sequence) =>
+					{
+						if (this.currentSequence == -1)
+						{ // https://stackoverflow.com/questions/23442543/using-async-await-with-dispatcher-begininvoke
+							await System.Windows.Application.Current.Dispatcher.Invoke<Task>(
+									async () =>
+									{ // change to UI thread to use UI dbContext
+										var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
+										Sells.Clear();
+										foreach (var order in response.Sells)
+										{ // no need to lock here bc lock is in AddOrder()
+											AddOrder(order, Side.Sell);
+										}
+										Buys.Clear();
+										foreach (var order in response.Buys)
+										{
+											AddOrder(order, Side.Buy);
+										}
+										this.currentSequence = response.Sequence;
+										blocker.Release();
+									});
+						}
 
-					if (sequence <= this.currentSequence)
-						// ignore older messages (e.g. before order book initialization from getProductOrderBook)
-						return false; // skip this msg
-					else if (sequence > this.currentSequence + 1)
-					{
-						// out of order
-						this.RealtimeOrderBookSubscription.UnSubscribe();
-						ResetStateWithFullOrderBookAsync();
-						return false; // skip this msg
-					}
-					else // sequence == this.currentSequence + 1
-					{
-						this.currentSequence = sequence;
-						return true; // process this msg
-					}
-				});
-        }
+						if (sequence <= this.currentSequence)
+							// ignore older messages (e.g. before order book initialization from getProductOrderBook)
+							return false; // skip this msg
+						else if (sequence > this.currentSequence + 1)
+						{
+							// out of order
+							this.RealtimeOrderBookSubscription.UnSubscribe();
+							await ResetStateWithFullOrderBookAsync();
+							return false; // skip this msg
+						}
+						else // sequence == this.currentSequence + 1
+						{
+							this.currentSequence = sequence;
+							return true; // process this msg
+						}
+					});
+				await blocker.WaitAsync();
+			}
+		}
 
 		private Tuple<object, ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(Side side)
 		{
@@ -191,7 +196,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		private void OnOpen(object sender, RealtimeOpen open)
 		{
-			System.Windows.Application.Current.Dispatcher.BeginInvoke(
+			System.Windows.Application.Current.Dispatcher.Invoke(
 			  System.Windows.Threading.DispatcherPriority.Background,
 			  new Action(() =>
 			  { // change to UI thread
@@ -205,7 +210,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		private void OnDone(object sender, RealtimeDone done)
 		{
-			System.Windows.Application.Current.Dispatcher.BeginInvoke(
+			System.Windows.Application.Current.Dispatcher.Invoke(
 			  System.Windows.Threading.DispatcherPriority.Background,
 			  new Action(() =>
 			  { // change to UI thread
@@ -215,7 +220,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		private void OnMatch(object sender, RealtimeMatch match)
 		{
-			System.Windows.Application.Current.Dispatcher.BeginInvoke(
+			System.Windows.Application.Current.Dispatcher.Invoke(
 			  System.Windows.Threading.DispatcherPriority.Background,
 			  new Action(() =>
 			  { // change to UI thread
@@ -238,7 +243,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		private void OnChange(object sender, RealtimeChange change)
 		{
 			if (change.NewSize != null)
-				System.Windows.Application.Current.Dispatcher.BeginInvoke(
+				System.Windows.Application.Current.Dispatcher.Invoke(
 				  System.Windows.Threading.DispatcherPriority.Background,
 				  new Action(() =>
 				  { // change to UI thread

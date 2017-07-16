@@ -13,8 +13,9 @@ namespace CoinbaseExchange.NET.Core
         public string ContentBody { get; private set; }
         public HttpStatusCode StatusCode { get; private set; }
         public bool IsSuccessStatusCode { get; private set; }
+		public string ErrorMessage { get; private set; }
 
-        public ExchangeResponse(
+		public ExchangeResponse(
             HttpStatusCode statusCode, 
             bool isSuccess, 
             IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers,
@@ -25,5 +26,11 @@ namespace CoinbaseExchange.NET.Core
             this.ContentBody = contentBody;
             this.IsSuccessStatusCode = isSuccess;
         }
+
+		public ExchangeResponse(bool isSuccess, string ErrorMessage)
+		{
+			this.IsSuccessStatusCode = isSuccess;
+			this.ErrorMessage = ErrorMessage;
+		}
     }
 }

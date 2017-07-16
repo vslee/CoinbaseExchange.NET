@@ -90,47 +90,61 @@ namespace CoinbaseExchange.NET.Core
 			var relativeUrlForSignature = baseURI.MakeRelativeUri(uriBuilder.Uri).ToString();
 			await rateGatePolling.WaitToProceedAsync(); // rate limit prior to TimeStamp being generated
 
-            using(var httpClient = new HttpClient())
-            {
-				if (_authContainer != null)
-				{ // authenticated get, required for querying account specific data, but optional for public data
-				  // Caution: Use the relative URL, *NOT* the absolute one.
-					var signature = _authContainer.ComputeSignature("/" + relativeUrlForSignature, method, body);
-					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-KEY", signature.ApiKey);
-					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-SIGN", signature.Signature);
-					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", signature.TimeStamp);
-					httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", signature.Passphrase);
-				}
-
-				httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
-				httpClient.DefaultRequestHeaders.Add("User-Agent", "vslee fork of sefbkn.github.io");
-
-				HttpResponseMessage response;
-				switch (method)
+			try
+			{
+				using (var httpClient = new HttpClient())
 				{
-					case "GET":
-						response = await httpClient.GetAsync(url);
-						break;
-					case "POST":
-						var requestBody = new StringContent(body, Encoding.UTF8, "application/json");
-						response = await httpClient.PostAsync(url, requestBody);
-						break;
-					case "DELETE":
-						response = await httpClient.DeleteAsync(url);
-						break;
-					case "PUT":
-						throw new NotImplementedException("PUT");
-					default:
-						throw new NotImplementedException("The supplied HTTP method is not supported: " + method ?? "(null)");
+					if (_authContainer != null)
+					{ // authenticated get, required for querying account specific data, but optional for public data
+					  // Caution: Use the relative URL, *NOT* the absolute one.
+						var signature = _authContainer.ComputeSignature("/" + relativeUrlForSignature, method, body);
+						httpClient.DefaultRequestHeaders.Add("CB-ACCESS-KEY", signature.ApiKey);
+						httpClient.DefaultRequestHeaders.Add("CB-ACCESS-SIGN", signature.Signature);
+						httpClient.DefaultRequestHeaders.Add("CB-ACCESS-TIMESTAMP", signature.TimeStamp);
+						httpClient.DefaultRequestHeaders.Add("CB-ACCESS-PASSPHRASE", signature.Passphrase);
+					}
+
+					httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ContentType));
+					httpClient.DefaultRequestHeaders.Add("User-Agent", "vslee fork of sefbkn.github.io");
+
+					HttpResponseMessage response;
+					switch (method)
+					{
+						case "GET":
+							response = await httpClient.GetAsync(url);
+							break;
+						case "POST":
+							var requestBody = new StringContent(body, Encoding.UTF8, "application/json");
+							response = await httpClient.PostAsync(url, requestBody);
+							break;
+						case "DELETE":
+							response = await httpClient.DeleteAsync(url);
+							break;
+						case "PUT":
+							throw new NotImplementedException("PUT");
+						default:
+							throw new NotImplementedException("The supplied HTTP method is not supported: " + method ?? "(null)");
+					}
+
+					var contentBody = await response.Content.ReadAsStringAsync();
+					var headers = response.Headers.AsEnumerable();
+					var statusCode = response.StatusCode;
+					var isSuccess = response.IsSuccessStatusCode;
+
+					return new ExchangeResponse(statusCode, isSuccess, headers, contentBody);
 				}
-
-				var contentBody = await response.Content.ReadAsStringAsync();
-				var headers = response.Headers.AsEnumerable();
-				var statusCode = response.StatusCode;
-				var isSuccess = response.IsSuccessStatusCode;
-
-				var genericExchangeResponse = new ExchangeResponse(statusCode, isSuccess, headers, contentBody);
-				return genericExchangeResponse;
+			}
+			catch (HttpRequestException e)
+			{ // HttpRequestException: An error occurred while sending the request.
+				return new ExchangeResponse(isSuccess: false, ErrorMessage: e.Message);
+			}
+			catch (WebException e)
+			{ // WebException: Unable to connect to the remote server
+				return new ExchangeResponse(isSuccess: false, ErrorMessage: e.Message);
+			}
+			catch (System.Net.Sockets.SocketException e)
+			{// SocketException: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+				return new ExchangeResponse(isSuccess: false, ErrorMessage: e.Message);
 			}
 		}
 
