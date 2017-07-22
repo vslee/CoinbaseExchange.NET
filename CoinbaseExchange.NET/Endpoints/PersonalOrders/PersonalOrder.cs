@@ -11,7 +11,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
 	public enum OrderStatus
 	{
-		// internal program statuses
+		// internal program statuses (no official status on GDAX)
 		Created, // prior to submission
 		Submitted, // prior to GDAX acknowledgement
 		Rejected, // submitted, but not accepted by GDAX
@@ -21,9 +21,13 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		Pending, // received by GDAX, prior to being "Received"?
 		Active, // same as "received" realtime state on GDAX
 		Open, // now on the order book 
-		Done, // either cancelled or filled
+		Done, // either cancelled or filled, and also either settled or not
+	    // settled (settled is a actually a separate boolean field in GDAX)
+
+		/// <summary>
+		/// does have official GDAX stautus, but unable to parse
+		/// </summary>
 		InvalidStatus, // unable to parse GDAX status
-	 // settled (settled is a actually a separate boolean field in GDAX)
 	}
 
 	public static partial class EnumExtensionMethods
@@ -53,7 +57,7 @@ namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 		public static OrderStatus[] Done => new OrderStatus[]
 		{
 			OrderStatus.Done, OrderStatus.SyntheticFill,
-			OrderStatus.Rejected, OrderStatus.InvalidStatus
+			OrderStatus.Rejected //, OrderStatus.InvalidStatus should not be part of this bc it could be active
 		};
 	}
 

@@ -35,6 +35,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         /// Token error or cancellation error, no need to restart stream
         /// </summary>
         public event EventHandler<RealtimeError> RealtimeDataError;
+		public event EventHandler ConnectionOpened;
 		public event EventHandler ConnectionClosed;
 
         public RealtimeOrderBookSubscription(string ProductString, CBAuthenticationContainer auth = null) : base(auth)
@@ -74,6 +75,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 
 			ws = new WebSocket(uri.ToString());
+			ws.OnOpen += (s, e) =>
+			{
+				ConnectionOpened?.Invoke(this, e);
+			};
 			ws.OnMessage += (sender, e) =>
 			{
 				var jToken = JToken.Parse(e.Data);

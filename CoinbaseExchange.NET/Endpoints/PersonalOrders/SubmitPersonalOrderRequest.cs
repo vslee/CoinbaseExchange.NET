@@ -4,6 +4,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using VSLee.Utils.ExchangeBase;
 
 namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
+	[DebuggerDisplay("Price = {Price}, Size = {Size}, Side = {Side}")]
 	public class PersonalOrderParams
 	{
 		// client_oid[optional] Order ID selected by you to identify your order

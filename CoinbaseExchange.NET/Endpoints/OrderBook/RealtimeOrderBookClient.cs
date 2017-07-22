@@ -97,8 +97,11 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 		}
 
+		private bool resetInProgress = false;
 		public async Task ResetStateWithFullOrderBookAsync()
 		{
+			if (resetInProgress) return;
+			resetInProgress = true;
 			currentSequence = -1;
 			using (var blocker = new SemaphoreSlim(0))
 			{
@@ -144,6 +147,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 					});
 				await blocker.WaitAsync();
 			}
+			resetInProgress = false;
 		}
 
 		private Tuple<object, ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(Side side)
