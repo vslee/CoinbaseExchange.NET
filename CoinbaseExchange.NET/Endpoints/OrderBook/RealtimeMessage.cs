@@ -14,8 +14,9 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public string Type { get; set; }
         public long Sequence { get; set; }
         public decimal? Price { get; set; }
+		public string Message { get; set; }
 
-        protected RealtimeMessage(JToken jToken)
+		protected RealtimeMessage(JToken jToken)
         {
             this.Type = jToken["type"].Value<string>();
             this.Sequence = jToken["sequence"].Value<long>();
@@ -23,6 +24,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			if (priceToken != null) // no "price" token in market orders
 				this.Price = priceToken.Value<decimal>();
         }
+
+		public RealtimeMessage() { }
     }
 
     public class RealtimeReceived : RealtimeMessage
@@ -52,6 +55,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
 				this.Side = sideEnum;
+			else Message = "Error parsing Side: " + jToken.ToString();
 		}
 	}
 
@@ -70,6 +74,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
 				this.Side = sideEnum;
+			else Message = "Error parsing Side: " + jToken.ToString();
 		}
 	}
 
@@ -94,6 +99,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
 				this.Side = sideEnum;
+			else Message = "Error parsing Side: " + jToken.ToString();
 			this.Reason = jToken["reason"].Value<string>();
         }
 
@@ -118,6 +124,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
 				this.Side = sideEnum;
+			else Message = "Error parsing Side: " + jToken.ToString();
 			this.Size = jToken["size"].Value<decimal>();
         }
     }
@@ -157,23 +164,19 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
 				this.Side = sideEnum;
+			else Message = "Error parsing Side: " + jToken.ToString();
 		}
 	}
 
-    public class RealtimeError
+    public class RealtimeError : RealtimeMessage
     {
-		/// <summary>
-		/// Will be "error"
-		/// </summary>
-		public string Type { get; set; }
-		public string Message { get; set; }
-		public RealtimeError(JToken jToken)
+		public RealtimeError(JToken jToken) : base()
         {
 			this.Type = jToken["type"].Value<string>();
 			this.Message = jToken["message"].Value<string>();
 		}
 
-		public RealtimeError(string ErrorMsg)
+		public RealtimeError(string ErrorMsg) : base()
 		{
 			this.Message = ErrorMsg;
 		}
