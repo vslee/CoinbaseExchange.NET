@@ -9,58 +9,6 @@ using VSLee.Utils.ExchangeBase;
 
 namespace CoinbaseExchange.NET.Endpoints.PersonalOrders
 {
-	public enum OrderStatus
-	{
-		// internal program statuses (no official status on GDAX)
-		Created, // prior to submission
-		Submitted, // prior to GDAX acknowledgement
-		Rejected, // submitted, but not accepted by GDAX
-		SyntheticFill, // internally filled
-
-		// GDAX statuses
-		Pending, // received by GDAX, prior to being "Received"?
-		Active, // same as "received" realtime state on GDAX
-		Open, // now on the order book 
-		Done, // either cancelled or filled, and also either settled or not
-	    // settled (settled is a actually a separate boolean field in GDAX)
-
-		/// <summary>
-		/// does have official GDAX stautus, but unable to parse
-		/// </summary>
-		InvalidStatus, // unable to parse GDAX status
-	}
-
-	public static partial class EnumExtensionMethods
-	{
-		public static bool IsInPlay(this OrderStatus orderStatus)
-		{
-			return InPlay.Contains(orderStatus);
-		}
-		public static OrderStatus[] InPlay => new OrderStatus[]
-		{
-			OrderStatus.Created, OrderStatus.Submitted, OrderStatus.Pending,
-			OrderStatus.Active, OrderStatus.Open
-		};
-		public static bool IsSubmittedButNotDone(this OrderStatus orderStatus)
-		{
-			return SubmittedButNotDone.Contains(orderStatus);
-		}
-		public static OrderStatus[] SubmittedButNotDone => new OrderStatus[]
-		{
-			OrderStatus.Submitted, OrderStatus.Pending,
-			OrderStatus.Active, OrderStatus.Open
-		};
-		public static bool IsDone(this OrderStatus orderStatus)
-		{
-			return Done.Contains(orderStatus);
-		}
-		public static OrderStatus[] Done => new OrderStatus[]
-		{
-			OrderStatus.Done, OrderStatus.SyntheticFill,
-			OrderStatus.Rejected //, OrderStatus.InvalidStatus should not be part of this bc it could be active
-		};
-	}
-
 	public class PersonalOrder
 	{
 		public Guid? ServerOrderId { get; set; }

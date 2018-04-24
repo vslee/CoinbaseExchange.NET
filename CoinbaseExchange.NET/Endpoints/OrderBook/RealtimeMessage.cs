@@ -15,6 +15,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public long Sequence { get; set; }
         public decimal? Price { get; set; }
 		public string Message { get; set; }
+		public DateTime Time { get; set; }
+		public string Product { get; set; }
 
 		protected RealtimeMessage(JToken jToken)
         {
@@ -23,7 +25,9 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var priceToken = jToken["price"];
 			if (priceToken != null) // no "price" token in market orders
 				this.Price = priceToken.Value<decimal>();
-        }
+            this.Time = jToken["time"].Value<DateTime>();
+			this.Product = jToken["product_id"].Value<string>();
+		}
 
 		public RealtimeMessage() { }
     }
@@ -110,7 +114,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public long TradeId { get; set; }
         public Guid MakerOrderId { get; set; }
         public Guid TakerOrderId { get; set; }
-        public DateTime Time { get; set; }
         public Side Side { get; set; }
 		public decimal Size { get; set; }
 
@@ -119,7 +122,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             this.TradeId = jToken["trade_id"].Value<long>();
 			this.MakerOrderId = (Guid)jToken["maker_order_id"];
 			this.TakerOrderId = (Guid)jToken["taker_order_id"];
-            this.Time = jToken["time"].Value<DateTime>();
 			var sideString = jToken["side"].Value<string>();
 			var sideParseSuccess = Enum.TryParse<Side>(sideString, ignoreCase: true, result: out var sideEnum);
 			if (sideParseSuccess)
@@ -132,7 +134,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
     public class RealtimeChange : RealtimeMessage
     {
         public Guid OrderId { get; set; }
-        public DateTime Time { get; set; }
         public decimal? NewSize { get; set; }
         public decimal? OldSize { get; set; }
 		/// <summary>
@@ -146,8 +147,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
             : base(jToken)
         {
             this.OrderId = (Guid)jToken["order_id"];
-            this.Time = jToken["time"].Value<DateTime>();
-
 			var newSizeToken = jToken["new_size"];
 			if (newSizeToken != null) // no "new_size" token in market orders going through self trade prevention
 				this.NewSize = newSizeToken.Value<decimal>();

@@ -64,11 +64,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 		}
 
-		public decimal GetBest(Side side)
-		{
-			return side == Side.Buy ? BestBuy : BestSell;
-		}
-
 		public RealtimeOrderBookClient(string ProductString, CBAuthenticationContainer auth = null)
         {
 			this.ProductString = ProductString;
@@ -77,7 +72,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			Sells = new ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>(isMultithreaded: true, comparer: new DescendingComparer<decimal>());
             Buys = new ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>(isMultithreaded: true, comparer: new DescendingComparer<decimal>());
 
-			this.RealtimeOrderBookSubscription = new RealtimeOrderBookSubscription(ProductString, auth);
+			this.RealtimeOrderBookSubscription = new RealtimeOrderBookSubscription(new string[] { ProductString }, auth);
 			this.RealtimeOrderBookSubscription.RealtimeOpen  += OnOpen;
 			this.RealtimeOrderBookSubscription.RealtimeDone += OnDone;
 			this.RealtimeOrderBookSubscription.RealtimeMatch += OnMatch;

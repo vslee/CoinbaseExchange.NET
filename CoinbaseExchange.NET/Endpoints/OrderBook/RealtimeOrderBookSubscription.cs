@@ -13,11 +13,22 @@ using VSLee.Utils;
 
 namespace CoinbaseExchange.NET.Endpoints.OrderBook
 {
-    public class RealtimeOrderBookSubscription : ExchangeClientBase, IDisposable
+	public enum GDAX_Channel
+	{
+		// heartbeat, included by default
+		// ticker, not yet implemented
+		// level2, not yet implemented
+		user,
+		matches,
+		full,
+	}
+
+   public class RealtimeOrderBookSubscription : ExchangeClientBase, IDisposable
     {
         public static readonly Uri WSS_SANDBOX_ENDPOINT_URL = new Uri("wss://ws-feed-public.sandbox.gdax.com");
         public static readonly Uri WSS_ENDPOINT_URL = new Uri("wss://ws-feed.gdax.com");
         private readonly string[] Products;
+		private readonly GDAX_Channel gdax_Channel;
 		CancellationTokenSource cancellationTokenSource;
 		// The websocket feed is publicly available, but connection to it are rate-limited to 1 per 4 seconds per IP.
 		/// <summary>
@@ -46,11 +57,13 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		/// </summary>
 		public event EventHandler<string> ConnectionClosed;
 
-        public RealtimeOrderBookSubscription(string ProductString, CBAuthenticationContainer auth = null) : base(auth)
+        public RealtimeOrderBookSubscription(string[] Products, CBAuthenticationContainer auth = null,
+			GDAX_Channel gdax_Channel = GDAX_Channel.full) : base(auth)
         { // + eventually can take an array of productStrings and subscribe simultaneously 
-			this.Products = new string[] { ProductString };
+			this.Products = Products;
 			if (Products == null || Products.Length == 0)
 				throw new ArgumentNullException("Products");
+			this.gdax_Channel = gdax_Channel;
         }
 
 		public async Task SubscribeAsync(bool reConnectOnDisconnect)
@@ -67,9 +80,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 
 			var uri = ExchangeClientBase.IsSandbox ? WSS_SANDBOX_ENDPOINT_URL : WSS_ENDPOINT_URL;
+			var productsString = Products.Aggregate((a, b) => a + "\", \"" + b);
 			// enough for unauthenticated feed
 			string requestStringSubset = String.Format(
-				@"""type"": ""subscribe"",""product_ids"": [""{0}""],""channels"": [""heartbeat"",""full""]", Products);
+				@"""type"": ""subscribe"",""product_ids"": [""{0}""],""channels"": [""heartbeat"",""full""]", productsString);
 			string requestString;
 			if (_authContainer == null)
 			{ //  
@@ -85,7 +99,6 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 
 			cancellationTokenSource = new CancellationTokenSource();
-			var timeoutCTS = new CancellationTokenSource(1500); // heartbeat every 1000 ms
 
 			while (!cancellationTokenSource.IsCancellationRequested)
 			{
@@ -117,7 +130,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 									justconnectedSL[product] = false;
 								}
 							}
-							using (timeoutCTS = new CancellationTokenSource(2100)) // heartbeat every 1000 ms, so give it 2 hearbeat chances
+							using (var timeoutCTS = new CancellationTokenSource(6500)) // heartbeat every 1000 ms, so give it 5 hearbeat chances
 							using (var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeoutCTS.Token, cancellationTokenSource.Token))
 							using (var stream = new MemoryStream(1024))
 							{
@@ -211,10 +224,12 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 										}
 										catch (JsonReaderException e)
 										{
-											RealtimeDataError?.Invoke(this, new RealtimeError("JsonReaderException: " + e.Message + ":" + messageString));
+											RealtimeDataError?.Invoke(this, new RealtimeError(
+												"JsonReaderException: " + e.Message + ":" + messageString));
 										}
 									}
-									else RealtimeDataError?.Invoke(this, new RealtimeError("empty message received"));
+									else RealtimeDataError?.Invoke(this, new RealtimeError("empty message received. Connection state: " 
+										+ webSocketClient.State + ", linkedToken: " + linkedTokenSource.Token.IsCancellationRequested));
 								}
 							}
 						}
