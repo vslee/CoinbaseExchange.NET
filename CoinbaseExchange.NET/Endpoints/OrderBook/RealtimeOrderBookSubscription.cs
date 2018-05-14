@@ -91,7 +91,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			}
 			else
 			{ // authenticated feed
-				var signBlock = _authContainer.ComputeSignature(relativeUrl: "/users/self", method: "GET", body: "");
+				var signBlock = _authContainer.ComputeSignature(relativeUrl: "/users/self/verify", method: "GET", body: "");
 				requestString = String.Format(
 					@"{{{0},""signature"": ""{1}"",""key"": ""{2}"",""passphrase"": ""{3}"",""timestamp"": ""{4}""}}",
 					requestStringSubset, signBlock.Signature, signBlock.ApiKey, signBlock.Passphrase, signBlock.TimeStamp);
@@ -179,35 +179,35 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 													var rr = new RealtimeReceived(jToken);
 													if (rr.Message != null)
 														RealtimeDataError?.Invoke(this, rr);
-													if (processSequence(rr.Sequence).Result)
+													if (await processSequence(rr.Sequence))
 														RealtimeReceived?.Invoke(this, rr);
 													break;
 												case "open":
 													var ro = new RealtimeOpen(jToken);
 													if (ro.Message != null)
 														RealtimeDataError?.Invoke(this, ro);
-													if (processSequence(ro.Sequence).Result)
+													if (await processSequence(ro.Sequence))
 														RealtimeOpen?.Invoke(this, ro);
 													break;
 												case "done":
 													var rd = new RealtimeDone(jToken);
 													if (rd.Message != null)
 														RealtimeDataError?.Invoke(this, rd);
-													if (processSequence(rd.Sequence).Result)
+													if (await processSequence(rd.Sequence))
 														RealtimeDone?.Invoke(this, rd);
 													break;
 												case "match":
 													var rm = new RealtimeMatch(jToken);
 													if (rm.Message != null)
 														RealtimeDataError?.Invoke(this, rm);
-													if (processSequence(rm.Sequence).Result)
+													if (await processSequence(rm.Sequence))
 														RealtimeMatch?.Invoke(this, rm);
 													break;
 												case "change":
 													var rc = new RealtimeChange(jToken);
 													if (rc.Message != null)
 														RealtimeDataError?.Invoke(this, rc);
-													if (processSequence(rc.Sequence).Result)
+													if (await processSequence(rc.Sequence))
 														RealtimeChange?.Invoke(this, rc);
 													break;
 												case "heartbeat":
@@ -242,7 +242,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 					else if (e.Message == "Unable to connect to the remote server") // System.Net.WebSockets.WebSocketException
 					{
 						disconnectReason = " - unable to connect to server"; // shorten it a bit
-						Thread.Sleep(10000); // if unable to connect, then wait 10 seconds before trying to connect again
+						await Task.Delay(10000); // if unable to connect, then wait 10 seconds before trying to connect again
 					}
 					else
 						RealtimeStreamError?.Invoke(this, new RealtimeError("other exception caught: " + e.GetType() + " : " + e.Message));

@@ -79,6 +79,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			this.RealtimeOrderBookSubscription.RealtimeChange += OnChange;
 			this.RealtimeOrderBookSubscription.ConnectionClosed += async (s, e) =>
 			{
+				resetInProgress = false;
 				if (!unSubscribing)
 					await ResetStateWithFullOrderBookAsync();
 			};
