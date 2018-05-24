@@ -32,18 +32,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\CryptoArbitrage\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\CryptoArbitrage\PublicLedger\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PresentationFramework" />
     <Reference Include="Swordfish.NET, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\CryptoArbitrage\packages\Swordfish.NET.CollectionsV3.3.0.0\lib\net45\Swordfish.NET.dll</HintPath>
+      <HintPath>..\..\CryptoArbitrage\PublicLedger\packages\Swordfish.NET.CollectionsV3.3.0.0.1\lib\net45\Swordfish.NET.dll</HintPath>
     </Reference>
-    <Reference Include="Swordfish.NET.CollectionsV3, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\CryptoArbitrage\packages\Swordfish.NET.CollectionsV3.3.0.0\lib\net45\Swordfish.NET.CollectionsV3.dll</HintPath>
+    <Reference Include="Swordfish.NET.CollectionsV3, Version=3.0.0.1, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\CryptoArbitrage\PublicLedger\packages\Swordfish.NET.CollectionsV3.3.0.0.1\lib\net45\Swordfish.NET.CollectionsV3.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\CryptoArbitrage\packages\System.Collections.Immutable.1.3.1\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <HintPath>..\..\CryptoArbitrage\PublicLedger\packages\System.Collections.Immutable.1.3.1\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -55,6 +55,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="websocket-sharp, Version=1.0.2.59611, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <HintPath>..\..\CryptoArbitrage\PublicLedger\packages\WebSocketSharp.1.0.3-rc11\lib\websocket-sharp.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>

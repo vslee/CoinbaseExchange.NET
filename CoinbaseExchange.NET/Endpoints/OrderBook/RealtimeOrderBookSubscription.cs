@@ -39,7 +39,8 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         public event EventHandler<RealtimeOpen> RealtimeOpen;
         public event EventHandler<RealtimeDone> RealtimeDone;
         public event EventHandler<RealtimeMatch> RealtimeMatch;
-        public event EventHandler<RealtimeChange> RealtimeChange;
+		public event EventHandler<RealtimeMatch> RealtimeLastMatch;
+		public event EventHandler<RealtimeChange> RealtimeChange;
         /// <summary>
         /// Error in underlying websocket stream, need to refresh orderbook
         /// </summary>
@@ -83,7 +84,7 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			var productsString = Products.Aggregate((a, b) => a + "\", \"" + b);
 			// enough for unauthenticated feed
 			string requestStringSubset = String.Format(
-				@"""type"": ""subscribe"",""product_ids"": [""{0}""],""channels"": [""heartbeat"",""full""]", productsString);
+				@"""type"": ""subscribe"",""product_ids"": [""{0}""],""channels"": [""heartbeat"",""{1}""]", productsString, gdax_Channel);
 			string requestString;
 			if (_authContainer == null)
 			{ //  
@@ -203,6 +204,13 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 													if (await processSequence(rm.Sequence))
 														RealtimeMatch?.Invoke(this, rm);
 													break;
+												case "last_match":
+													var rlm = new RealtimeMatch(jToken);
+													if (rlm.Message != null)
+														RealtimeDataError?.Invoke(this, rlm);
+													if (await processSequence(rlm.Sequence))
+														RealtimeLastMatch?.Invoke(this, rlm);
+													break;
 												case "change":
 													var rc = new RealtimeChange(jToken);
 													if (rc.Message != null)
@@ -247,13 +255,15 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 					else
 						RealtimeStreamError?.Invoke(this, new RealtimeError("other exception caught: " + e.GetType() + " : " + e.Message));
 				}
+				if (!reConnectOnDisconnect)
+					UnSubscribe();
 				foreach (var product in Products)
 				{
 					RealtimeStreamError?.Invoke(this, new RealtimeError("disconnected" + disconnectReason));
 					ConnectionClosed?.Invoke(this, product);
 				}
 				if (!reConnectOnDisconnect)
-					UnSubscribe();
+					break;
 			}
 		}
 
