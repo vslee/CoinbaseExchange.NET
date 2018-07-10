@@ -21,7 +21,10 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
         private readonly object _buyLock = new object();
 		private readonly Dictionary<Guid, BidAskOrder> _ordersByID = new Dictionary<Guid, BidAskOrder>();
 		Int64 currentSequence = -1;
-		bool unSubscribing;
+		/// <summary>
+		/// whether RealtimeOrderBookSubscription was created here (true) or passed in the constructor (false)
+		/// </summary>
+		bool robsCreatedLocally = false;
 		public RealtimeOrderBookSubscription RealtimeOrderBookSubscription { get; private set; }
 		readonly ProductOrderBookClient productOrderBookClient;
 
@@ -65,6 +68,14 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 		}
 
 		public RealtimeOrderBookClient(string ProductString, CBAuthenticationContainer auth = null)
+			: this(ProductString: ProductString, auth: auth,
+				  realtimeOrderBookSubscription: new RealtimeOrderBookSubscription(new string[] { ProductString }, auth))
+		{
+			robsCreatedLocally = true;
+		}
+
+		public RealtimeOrderBookClient(string ProductString, RealtimeOrderBookSubscription realtimeOrderBookSubscription,
+										CBAuthenticationContainer auth = null)
         {
 			this.ProductString = ProductString;
 			this.productOrderBookClient = new ProductOrderBookClient(auth);
@@ -72,18 +83,25 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			Sells = new ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>(isMultithreaded: true, comparer: new DescendingComparer<decimal>());
             Buys = new ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>(isMultithreaded: true, comparer: new DescendingComparer<decimal>());
 
-			this.RealtimeOrderBookSubscription = new RealtimeOrderBookSubscription(new string[] { ProductString }, auth);
+			this.RealtimeOrderBookSubscription = realtimeOrderBookSubscription;
 			this.RealtimeOrderBookSubscription.RealtimeOpen  += OnOpen;
 			this.RealtimeOrderBookSubscription.RealtimeDone += OnDone;
 			this.RealtimeOrderBookSubscription.RealtimeMatch += OnMatch;
 			this.RealtimeOrderBookSubscription.RealtimeChange += OnChange;
-			this.RealtimeOrderBookSubscription.ConnectionClosed += async (s, e) =>
-			{
-				resetInProgress = false;
-				if (!unSubscribing)
-					await ResetStateWithFullOrderBookAsync();
-			};
+			
+			// not really used for anything except for their sequence number
+			this.RealtimeOrderBookSubscription.RealtimeReceived += OnReceived;
+			this.RealtimeOrderBookSubscription.RealtimeLastMatch += OnLastMatch;
+			this.RealtimeOrderBookSubscription.Heartbeat += OnHeartbeat;
+
+			this.RealtimeOrderBookSubscription.ConnectionClosed += OnConnectionClosed;
         }
+
+		private async void OnConnectionClosed(string product, GDAX_Channel channel)
+		{
+			//resetInProgress = false;
+			await ResetStateWithFullOrderBookAsync();
+		}
 
 		class DescendingComparer<T> : IComparer<T> where T : IComparable<T>
 		{
@@ -99,51 +117,54 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			if (resetInProgress) return;
 			resetInProgress = true;
 			currentSequence = -1;
-			using (var blocker = new SemaphoreSlim(0))
-			{
-				var subTask = this.RealtimeOrderBookSubscription.SubscribeAsync(// don't await bc it won't complete until subscription ends
-										reConnectOnDisconnect: false, processSequence: async (sequence) =>
-					{
-						if (this.currentSequence == -1)
-						{ // https://stackoverflow.com/questions/23442543/using-async-await-with-dispatcher-begininvoke
-							await System.Windows.Application.Current.Dispatcher.Invoke<Task>(
-									async () =>
-									{ // change to UI thread to use UI dbContext
-										var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
-										Sells.Clear();
-										foreach (var order in response.Sells)
-										{ // no need to lock here bc lock is in AddOrder()
-											AddOrder(order, Side.Sell);
-										}
-										Buys.Clear();
-										foreach (var order in response.Buys)
-										{
-											AddOrder(order, Side.Buy);
-										}
-										this.currentSequence = response.Sequence;
-										blocker.Release();
-									});
-						}
-
-						if (sequence <= this.currentSequence)
-							// ignore older messages (e.g. before order book initialization from getProductOrderBook)
-							return false; // skip this msg
-						else if (sequence > this.currentSequence + 1)
-						{
-							// out of order
-							this.RealtimeOrderBookSubscription.UnSubscribe();
-							await ResetStateWithFullOrderBookAsync();
-							return false; // skip this msg
-						}
-						else // sequence == this.currentSequence + 1
-						{
-							this.currentSequence = sequence;
-							return true; // process this msg
-						}
-					});
-				await blocker.WaitAsync();
-			}
+			if (robsCreatedLocally)
+				this.RealtimeOrderBookSubscription.SubscribeAsync(// don't await bc it won't complete until subscription ends
+										reConnectOnDisconnect: true); // else should already be subscribed
+			//using (var blocker = new SemaphoreSlim(0))
+			//{ // https://stackoverflow.com/questions/23442543/using-async-await-with-dispatcher-begininvoke
+				await System.Windows.Application.Current.Dispatcher.Invoke<Task>(
+						async () =>
+						{ // change to UI thread to use UI dbContext
+							var response = await productOrderBookClient.GetProductOrderBook(ProductString, 3);
+							Sells.Clear();
+							foreach (var order in response.Sells)
+							{ // no need to lock here bc lock is in AddOrder()
+								AddOrder(order, Side.Sell);
+							}
+							Buys.Clear();
+							foreach (var order in response.Buys)
+							{
+								AddOrder(order, Side.Buy);
+							}
+							this.currentSequence = response.Sequence;
+							//blocker.Release();
+						});
+			//	await blocker.WaitAsync();
+			//}
 			resetInProgress = false;
+		}
+
+		private async Task<bool> checkSequenceNumber(long sequence)
+		{
+			if (this.currentSequence == -1)
+			{
+				await ResetStateWithFullOrderBookAsync();
+			}
+
+			if (sequence <= this.currentSequence)
+				// ignore older messages (e.g. before order book initialization from getProductOrderBook)
+				return false; // skip this msg
+			else if (sequence > this.currentSequence + 1)
+			{
+				// out of order (missed one)
+				await ResetStateWithFullOrderBookAsync();
+				return false; // skip this msg
+			}
+			else // sequence == this.currentSequence + 1
+			{
+				this.currentSequence = sequence;
+				return true; // process this msg
+			}
 		}
 
 		private Tuple<object, ConcurrentObservableSortedDictionary<decimal, ObservableLinkedList<BidAskOrder>>> GetOrderList(Side side)
@@ -194,55 +215,58 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 			NotifyPropertyChanged("Spread");
 		}
 
-		private void OnOpen(object sender, RealtimeOpen open)
+		private async void OnOpen(object sender, RealtimeOpen open)
 		{
-			System.Windows.Application.Current.Dispatcher.Invoke(
-			  System.Windows.Threading.DispatcherPriority.Background,
-			  new Action(() =>
-			  { // change to UI thread
-				  var order = new BidAskOrder();
-				  order.Id = open.OrderId;
-				  order.Price = open.Price.Value;
-				  order.Size = open.RemainingSize;
-				  AddOrder(order: order, side: open.Side);
-			  }));
+			if (await checkSequenceNumber(open.Sequence))
+				System.Windows.Application.Current.Dispatcher.Invoke(
+				  System.Windows.Threading.DispatcherPriority.Background,
+				  new Action(() =>
+				  { // change to UI thread
+					  var order = new BidAskOrder();
+					  order.Id = open.OrderId;
+					  order.Price = open.Price.Value;
+					  order.Size = open.RemainingSize;
+					  AddOrder(order: order, side: open.Side);
+				  }));
 		}
 
-		private void OnDone(object sender, RealtimeDone done)
+		private async void OnDone(object sender, RealtimeDone done)
 		{
-			System.Windows.Application.Current.Dispatcher.Invoke(
-			  System.Windows.Threading.DispatcherPriority.Background,
-			  new Action(() =>
-			  { // change to UI thread
-				  RemoveOrder(orderID: done.OrderId, side: done.Side);
-			  }));
+			if (await checkSequenceNumber(done.Sequence))
+				System.Windows.Application.Current.Dispatcher.Invoke(
+				  System.Windows.Threading.DispatcherPriority.Background,
+				  new Action(() =>
+				  { // change to UI thread
+					  RemoveOrder(orderID: done.OrderId, side: done.Side);
+				  }));
 		}
 
-		private void OnMatch(object sender, RealtimeMatch match)
+		private async void OnMatch(object sender, RealtimeMatch match)
 		{
-			System.Windows.Application.Current.Dispatcher.Invoke(
-			  System.Windows.Threading.DispatcherPriority.Background,
-			  new Action(() =>
-			  { // change to UI thread
-				  var list = GetOrderList(side: match.Side);
-				  list.Item2.TryGetValue(match.Price.Value, out var linkedList);
-				  if (linkedList == null)
-					  return; // + handle when order is not in book (say program missed some orders being added)
-				  var order = linkedList.Where(o => o.Id == match.MakerOrderId).SingleOrDefault();
-				  if (order != null)
-				  {
-					  order.Size -= match.Size;
-					  if (order.Size == 0)
-						  RemoveOrder(match.MakerOrderId, side: match.Side);
-					  if (order.Size < 0)
-						  RemoveOrder(match.MakerOrderId, side: match.Side);
-				  }
-			  }));
+			if (await checkSequenceNumber(match.Sequence))
+				System.Windows.Application.Current.Dispatcher.Invoke(
+				  System.Windows.Threading.DispatcherPriority.Background,
+				  new Action(() =>
+				  { // change to UI thread
+					  var list = GetOrderList(side: match.Side);
+					  list.Item2.TryGetValue(match.Price.Value, out var linkedList);
+					  if (linkedList == null)
+						  return; // + handle when order is not in book (say program missed some orders being added)
+					  var order = linkedList.Where(o => o.Id == match.MakerOrderId).SingleOrDefault();
+					  if (order != null)
+					  {
+						  order.Size -= match.Size;
+						  if (order.Size == 0)
+							  RemoveOrder(match.MakerOrderId, side: match.Side);
+						  if (order.Size < 0)
+							  RemoveOrder(match.MakerOrderId, side: match.Side);
+					  }
+				  }));
 		}
 
-		private void OnChange(object sender, RealtimeChange change)
+		private async void OnChange(object sender, RealtimeChange change)
 		{
-			if (change.NewSize != null)
+			if (await checkSequenceNumber(change.Sequence) && change.NewSize != null)
 				System.Windows.Application.Current.Dispatcher.Invoke(
 				  System.Windows.Threading.DispatcherPriority.Background,
 				  new Action(() =>
@@ -260,6 +284,21 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 				  }));
 		}
 
+		private async void OnReceived(object sender, RealtimeReceived received)
+		{
+			await checkSequenceNumber(received.Sequence);
+		}
+
+		private async void OnLastMatch(object sender, RealtimeMatch lastMatch)
+		{
+			await checkSequenceNumber(lastMatch.Sequence);
+		}
+
+		private async void OnHeartbeat(object sender, Heartbeat heartbeat)
+		{
+			await checkSequenceNumber(heartbeat.Sequence);
+		}
+
 		protected virtual void NotifyPropertyChanged(String propertyName)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -267,8 +306,19 @@ namespace CoinbaseExchange.NET.Endpoints.OrderBook
 
 		public void Dispose()
 		{
-			unSubscribing = true;
-			RealtimeOrderBookSubscription.UnSubscribe();
+			this.RealtimeOrderBookSubscription.RealtimeOpen -= OnOpen;
+			this.RealtimeOrderBookSubscription.RealtimeDone -= OnDone;
+			this.RealtimeOrderBookSubscription.RealtimeMatch -= OnMatch;
+			this.RealtimeOrderBookSubscription.RealtimeChange -= OnChange;
+			this.RealtimeOrderBookSubscription.RealtimeReceived -= OnReceived;
+			this.RealtimeOrderBookSubscription.RealtimeLastMatch -= OnLastMatch;
+			this.RealtimeOrderBookSubscription.Heartbeat -= OnHeartbeat;
+			this.RealtimeOrderBookSubscription.ConnectionClosed -= OnConnectionClosed;
+
+			if (robsCreatedLocally)
+			{
+				RealtimeOrderBookSubscription.Dispose();
+			}
 		}
 	}
 }

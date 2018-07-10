@@ -7,7 +7,6 @@
 *.sln.docstates
 
 # Build results
-
 [Dd]ebug/
 [Rr]elease/
 x64/
@@ -17,6 +16,9 @@ build/
 
 # nuget (should be specified in the .sln anyhow)
 packages/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

@@ -9,7 +9,22 @@ using VSLee.Utils.ExchangeBase;
 
 namespace CoinbaseExchange.NET.Endpoints.OrderBook
 {
-    public class RealtimeMessage
+	public class Heartbeat
+	{
+		public long Sequence { get; set; }
+		public DateTime Time { get; set; }
+		public string Product { get; set; }
+		public long LastTradeId { get; set; }
+		public Heartbeat(JToken jToken)
+		{
+			this.Sequence = jToken["sequence"].Value<long>();
+			this.Time = jToken["time"].Value<DateTime>();
+			this.Product = jToken["product_id"].Value<string>();
+			this.LastTradeId = jToken["last_trade_id"].Value<long>();
+		}
+	}
+
+	public class RealtimeMessage
     {
         public string Type { get; set; }
         public long Sequence { get; set; }
