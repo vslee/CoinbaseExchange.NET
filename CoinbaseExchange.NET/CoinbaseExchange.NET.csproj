@@ -85,6 +85,7 @@
     <Compile Include="Endpoints\OrderBook\RealtimeMessage.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookClient.cs" />
     <Compile Include="Endpoints\OrderBook\RealtimeOrderBookSubscription.cs" />
+    <Compile Include="Endpoints\OrderBook\RealtimePriceClient.cs" />
     <Compile Include="Endpoints\PersonalOrders\CancelAllPersonalOrdersRequest.cs" />
     <Compile Include="Endpoints\PersonalOrders\CancelAllPersonalOrdersResponse.cs" />
     <Compile Include="Endpoints\PersonalOrders\CancelPersonalOrderRequest.cs" />
