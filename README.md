@@ -1,10 +1,9 @@
 # GDAX/CoinbaseExchange.NET
 
-A C# wrapper around the GDAX/Coinbase exchange API
-
+A C# wrapper around the GDAX/Coinbase exchange API. 
 This is a fork of https://github.com/sefbkn/CoinbaseExchange.NET with some improvements I made
 
-If you are starting a new project interfacing with GDAX, I recommend checking out https://github.com/dougdellolio/gdax-csharp - it appears to be the most actively maintained library. I will continue to make minor fixes to this library but it is not actively maintained. 
+If you are starting a new project interfacing with GDAX, I recommend checking out https://github.com/dougdellolio/gdax-csharp  and https://github.com/jjxtra/ExchangeSharp - they appear to be the most actively maintained libraries. I will continue to make minor fixes to this library but it is not actively maintained. 
 
 ## Dependencies
 
